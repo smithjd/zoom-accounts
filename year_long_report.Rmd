@@ -1,0 +1,123 @@
+---
+title: "Year-long Report"
+author: "John D. Smith"
+date: "11/30/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(knitr))
+library(gt)
+library(here)
+library(glue)
+library(googlesheets4)
+theme_set(theme_light())
+```
+
+```{r}
+file_list <- paste0("./data/",dir("./data", pattern = "meetings.*Rds")) 
+file_list
+
+```
+
+```{r}
+cum_history <-  file_list %>%  map_dfr(readRDS) %>% 
+  mutate(duration = round(as.numeric(end_time - start_time) / 60, digits = 1))
+```
+
+
+```{r}
+cum_history %>% 
+  count(dept)
+cum_history %>% 
+  count(host_email, sort = TRUE) %>% as.data.frame()
+```
+
+```{r}
+cum_history %>% filter(dept == "Kalapa Media") %>% count(host_email)
+cum_history %>% filter(dept == "SGS") %>% count(host_email)
+max_date_time <- max(cum_history$start_time, na.rm = TRUE)
+min_date_time <- min(cum_history$start_time, na.rm = TRUE)
+
+```
+
+```{r}
+a_year_ago <- max(cum_history$start_time, na.rm = TRUE) - years(x = 1)
+
+past_year_activity <- 
+  cum_history %>% 
+  filter(start_time > a_year_ago) %>% 
+  select(-uuid)
+```
+
+```{r}
+jeff <- past_year_activity %>% 
+  filter(str_detect(host_email, "jeff")) %>% 
+  select(-start_time_only, -end_time_only)
+
+charlie <- past_year_activity %>% 
+  filter(str_detect(host_email, "practiceeducation")) %>% 
+  select(-start_time_only, -end_time_only)
+```
+
+```{r}
+  ss <- gs4_create(
+  glue("P&E Zoom calls in last year"),
+  sheets = list('Jeff detail' = jeff,
+                'Charlie Detail' = charlie))
+
+
+gs4_browse(ss)
+```
+
+```{r}
+sgs_hosts <- past_year_activity %>% 
+  filter(dept %in% c("SGS", "Shambhala Online")) %>% 
+  count(host_email, dept, name = "with_dept_id")
+```
+
+
+```{r}
+dept_stripped_out <-  past_year_activity %>% 
+  select(-dept)
+
+sgs_expanded <- sgs_hosts %>% 
+  left_join(dept_stripped_out) %>% 
+  group_by(dept, host_email) %>% 
+  summarize(meetings = n(), 
+            total_hours = round(sum(duration, na.rm = TRUE) / 60, digits = 1), 
+            total_participants = sum(participants_count, na.rm = TRUE),
+            mean_participants = round(total_participants / meetings, digits = 1))
+
+```
+
+```{r}
+sgs_expanded %>% gt() %>% 
+  tab_header(title = "SGS and Shambhala Online Zoom activity",
+             subtitle = glue("Between ", 
+                             format(a_year_ago, "%b %d, %Y") , 
+                             " and ", 
+                             format(max_date_time, "%b %d, %Y")  )) %>% 
+  cols_align(
+    align = "right",
+    columns = vars(meetings, total_hours, total_participants)) %>% 
+  cols_label(
+    host_email = "Host Email",
+    meetings = "Meetings",
+    total_hours = "Hours",
+    total_participants = "Participants",
+    mean_participants = "Participants") %>% 
+tab_spanner(
+    label = "Total",
+    columns = vars(meetings, total_hours, total_participants)
+) %>% 
+tab_spanner(
+    label = "Average",
+    columns = vars(mean_participants)
+)
+```
+

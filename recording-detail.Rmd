@@ -1,0 +1,118 @@
+---
+title: "recordings"
+author: "John D. Smith"
+date: "5/1/2020"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+238375960
+```{r}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+library(openssl)
+library(jose)
+suppressPackageStartupMessages(library(jsonlite))
+library(curl)
+library(RCurl)
+library(googlesheets)
+library(here)
+library(httpuv)
+
+report_month <- as_date("2020-04-15")
+
+start_date <- floor_date(report_month, "month")
+# end_date <- rollback(report_month)
+end_date <- ceiling_date(report_month, "month") - 1
+
+claim <- jwt_claim(
+  exp = as.numeric(Sys.time() + 3600),
+  iss = Sys.getenv("zoom_api_key")
+)
+
+jwt <- jwt_encode_hmac(
+  claim,
+  secret = charToRaw(Sys.getenv("zoom_api_secret"))
+)
+
+```
+get the list of past meetings
+```{r}
+past_meetings <- read_rds(here("data", "past_meetings.Rds"))
+zoom_user_list <- read_rds(here("data", "zoom_user_list.Rds")) %>% 
+  mutate(name = paste(first_name, last_name))
+
+```
+
+
+```{r}
+get_recordings <- function(email_id, from_date, to_date) {
+  # Get all the recordings made by a user
+  # curl https://api.zoom.us/v2/report/users/{userId}/recordings?from=string&to=string
+  response <- curl_fetch_memory(
+    paste0(
+      "https://api.zoom.us/v2/users/",
+      email_id, "/recordings?from=", from_date, "&to=", to_date,
+      "&page_size=60&page_number=1&access_token=",
+      jwt
+    )
+  )
+
+  response$status_code
+  response_content <- fromJSON(rawToChar(response$content))
+  recordings <- response_content$recordings
+  response_content
+}
+```
+
+```{r}
+account_list <- zoom_user_list$url_email_account
+
+recordings_list <- account_list %>%  map(~get_recordings(.x,
+                         from_date = start_date,
+                         to_date = end_date))
+
+recordings <- bind_rows(transpose(recordings_list)$meetings)
+
+```
+
+```{r}
+sum(recordings$total_size)
+recordings %>% count(timezone)
+```
+
+https://marketplace.zoom.us/docs/api-reference/zoom-api/dashboards/dashboardmeetingparticipants
+
+  https://api.zoom.us/v2/metrics/meetings/{meetingId}/participants
+
+/report/meetings/{meetingId}/participants
+
+```{r}
+get_participants <- function(meeting_id) {
+  # Get all the participants from a meeting
+  # curl https://api.zoom.us/v2/report/meetings/{meetingId}/participants
+  response <- curl_fetch_memory(
+    paste0(
+      "https://api.zoom.us/v2/report/meetings/",
+      meeting_id, "/participants",
+      "&access_token=",
+      jwt
+    )
+  )
+  response$status_code
+  response_content <- fromJSON(rawToChar(response$content))
+  participants <- response_content$participants
+  response_content
+}
+
+participants <- get_participants(curlEscape("UcXhV4iaT7COJejoWGUeBw=="))
+participants <- get_participants("UcXhV4iaT7COJejoWGUeBw==")
+participants <- get_participants("844694310")
+```
+
+GET
+/past_meetings/{meetingUUID}/participants
+

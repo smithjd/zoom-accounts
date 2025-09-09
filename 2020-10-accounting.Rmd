@@ -1,0 +1,40 @@
+---
+title: "Accounting 2020-10"
+author: "John D. Smith"
+date: "10/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Packages
+
+```{r, echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(readr))
+suppressPackageStartupMessages(library(janitor))
+library(gt)
+library(here)
+```
+
+```{r}
+ zoomus_users_2020_10_06 <- read_csv("data/zoomus_users_2020-10-06.csv", 
+  col_types = cols(`Last Login(UTC)` = col_datetime(format = "%Y-%m-%d %H:%M:%S"), 
+      `Creation Date` = col_date(format = "%Y-%m-%d"))) %>% 
+  clean_names() %>% 
+  mutate(SO_email = str_detect(email, "shambhalaonline.org"))
+```
+
+```{r}
+zoomus_users_2020_10_06 %>% 
+  filter(SO_email == TRUE & department == "Shambhala") %>% 
+  select(email, first_name, last_name, last_login_utc)
+```
+
+```{r}
+zoomus_users_2020_10_06 %>% count(user_type, department)
+```
+

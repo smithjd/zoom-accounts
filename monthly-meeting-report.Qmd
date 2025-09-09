@@ -1,0 +1,234 @@
+---
+title: "Monthly Zoom Account Utilization Report"
+author: "Shambhala Global Services"
+format: docx
+---
+
+```{r}
+#| label = "setup",
+#| include = FALSE
+# API documentation: https://zoom.github.io/api/#introduction
+# API playground: https://developer.zoom.us/playground/
+#
+# to authorize gmailr, on the server you may need to run with this option set:
+#    options(httr_oob_default=TRUE)
+#
+# * Retrieve future scheduled for instructional Zoom accounts
+# * send a data table to a list of people
+# * save a .Rmd file
+# * run every Friday morning
+
+# https://zoom.us/account/metrics/pastmeetings for a list of past meetings
+
+knitr::opts_chunk$set(echo = FALSE)
+
+# RUN: get-user-list-monthly-data.R first...
+
+```
+
+# Overview
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(knitr))
+# library(googlesheets)
+library(DT)
+library(gt)
+suppressPackageStartupMessages(library(gmailr))
+library(here)
+pagebreak <- function() {
+  if (knitr::is_latex_output())
+    return("\\newpage")
+  else
+    return('<div style="page-break-before: always;" />')
+}
+
+zoom_user_list <- read_rds(here("data", "zoom_user_list.Rds")) %>% 
+  mutate(name = paste(first_name, last_name))
+
+past_meetings <- read_rds(here("data", "past_meetings.Rds"))
+
+report_start_date <- as.Date(min(past_meetings$start_time, na.rm = TRUE))
+report_end_date <- as.Date(max(past_meetings$start_time, na.rm = TRUE))
+```
+
+This report covers the period between `r report_start_date` and
+`r report_end_date`.
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+meeting_stats <- past_meetings %>% 
+  group_by(host_email) %>% 
+  summarize(total_meeting_time = sum(duration, na.rm = TRUE),
+            total_participants = sum(participants_count, na.rm = TRUE),
+            number_of_meetings = n()) 
+
+meeting_count <- zoom_user_list %>% 
+  left_join(meeting_stats, by = c("email" = "host_email" )) %>% 
+  mutate(active = ifelse(total_meeting_time == 0, "Unused", "Used")) %>% 
+  filter(type == 2) %>%
+  count(dept, active, name = "Accounts") %>%
+  pivot_wider(names_from = active, values_from = Accounts, values_fill = list(Accounts = 0))
+
+# meeting_count %>% 
+#   gt() %>% 
+#   cols_label(dept = "Department") %>% 
+#   summary_rows(columns = vars(Used, Unused),
+#                fns = list(Total = ~sum(.)),
+#                formatter = fmt_number) %>% 
+#   fmt_number(columns = vars(Used, Unused), decimals = 0) %>% 
+#   tab_header(title = "Number of Zoom Accounts", subtitle = "Usage by Department")
+
+inactive_users <- past_meetings %>% 
+  group_by(host_email) %>% 
+  summarize(duration = sum(duration, na.rm = TRUE)) %>% 
+  filter(duration == 0) %>% 
+  # select(host_email) %>% 
+  left_join(zoom_user_list, by = c("host_email" = "email")) %>% 
+  filter(type == 2) 
+
+```
+
+# Large meetings (more than 50 participants)
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+large_meetings <- past_meetings %>% 
+  filter(participants_count > 49) %>% 
+  mutate(Date = as.Date(start_time),
+         topic = str_wrap(topic, 30)) %>% 
+  select(Date, Topic = topic, 
+         Participants = participants_count) %>% 
+  # DT::datatable()
+  kable()
+
+large_meetings
+```
+
+This report shows the accounts that were used as well as some that were not.  It depicts the length of meetings and the range of meeting size during the reporting period.
+
+# Utilization of active accounts
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+active_user_profile <- past_meetings %>% 
+  filter(duration > 0) %>% 
+  group_by(host_email) %>% 
+  summarise(total_minutes = sum(duration), 
+            total_participants = sum(participants_count),
+            meeting_count = n()) %>% 
+  left_join(zoom_user_list, by = c("host_email" = "email" )) %>% 
+  ungroup() %>% 
+  arrange(dept, first_name, last_name) 
+
+active_profile <- active_user_profile %>% 
+ select(dept, first_name, last_name, host_email, meeting_count, 
+        total_minutes, total_participants) %>% 
+  mutate(name = paste(first_name, last_name)) %>% 
+  select(-first_name, -last_name) %>% 
+  group_by(dept) 
+
+active_profile_table <- active_profile |> 
+ gt(groupname_col = "dept") %>% 
+  cols_label(
+    name = "Name",
+    host_email = "Email",
+    meeting_count = "Meetings",
+    total_minutes = "Minutes",
+    total_participants = "Participants"
+    ) %>% 
+  fmt_number(
+    columns = c(meeting_count, total_minutes, total_participants),
+    decimals = 0) %>% 
+  # summary_rows(
+  #   groups = TRUE,
+  #   columns = c(meeting_count, total_minutes, total_participants),
+  #   # fns = list(Count = ~sum(.)),
+  #   formatter = fmt_number,
+  #   decimals = 0 ,
+  #   use_seps = FALSE
+  # ) %>% 
+  tab_header(title = "Active users", subtitle = "by department")
+
+# active_profile_table
+kable(active_profile)
+```
+# Inactive accounts
+
+Of the `r zoom_user_list %>% filter(type == 2) %>% nrow()` Zoom accounts, `r nrow(inactive_users)` were **not** used during the month:
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+inactive_users <- inactive_users  %>% 
+  mutate(name = paste(first_name, last_name)) %>% 
+  select(dept, name, host_email) %>% 
+  arrange(dept) 
+
+inactive_table <- inactive_users  %>% 
+   gt(
+    groupname_col = "dept") %>% 
+  cols_label(
+    dept = "Department",
+    name = "Name",
+    host_email = "Email Address"
+    ) %>% 
+  tab_header(title = "Inactive users", subtitle = "by Department")
+
+# inactive_table
+kable(inactive_users)
+```
+`r pagebreak()`
+
+# Meeting characteristics
+
+## How long do meetings last?
+
+```{r}
+#| message: false 
+#| warning: false 
+#| fig-height: 7
+
+user_meetings <- zoom_user_list %>% 
+  select(-dept) %>% 
+  left_join(past_meetings, by = c("email" = "host_email")) |> 
+  filter(!is.na(dept))
+  
+ggplot(user_meetings, aes(duration)) +
+  geom_histogram() +
+  scale_x_log10() +
+  facet_wrap(~dept, ncol = 1, strip.position ="top") +
+  labs(x = "Meeting Duration in Minutes",
+       y = NULL) 
+  # theme( )
+```
+
+## How many people in a meeting?
+
+Most meetings held this month were for very small groups:
+
+```{r}
+#| echo = FALSE,
+#| message = FALSE
+user_meetings_count <- user_meetings %>% 
+  count(participants_count, sort = TRUE) %>% 
+  filter(!is.na(participants_count))
+
+biggest_meeting <- max(user_meetings_count$participants_count, na.rm = TRUE)
+
+user_meetings_count %>% 
+  head(n = 12) %>% 
+  gt() %>% 
+  cols_label(
+    participants_count = "# of Meeting Participants",
+    n = "# of Meetings"
+  ) %>% 
+  tab_header(title = "Top 10 most-frequent meeting sizes", 
+             subtitle = paste("(The biggest had", biggest_meeting, "attendees)"))
+
+```

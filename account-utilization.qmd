@@ -1,0 +1,41 @@
+---
+title: "ZOOM account utilization"
+format: pdf
+---
+
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(scales)
+```
+
+You can add options to executable code like this
+
+```{r}
+#| echo: false
+
+zoom_events <- list.files(path = here("raw-data"), 
+                          pattern = "*.csv", 
+                          full.names = TRUE) %>%
+  map_df(read_csv) |> 
+  clean_names() |>
+  mutate(start_time = mdy_hms(start_time),
+         date = as.Date(floor_date(start_time, unit = "month")))
+
+write_rds(zoom_events, here("data", "zoom_events.rds"))
+```
+
+
+```{r}
+zoom_events |> 
+  select(department, user_type, group,
+archiving, phone, vo_ip, x3rd_party_audio, video, screen_sharing, recording, poll, q_a, survey, crc, encryption
+  ) |>
+  pivot_longer(everything()) |>
+  count(name, value) |>
+  arrange(name, value) |> 
+  print(n = 500)
+```
+

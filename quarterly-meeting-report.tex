@@ -1,0 +1,647 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Monthly Zoom Account Utilization Report},
+  pdfauthor={Shambhala Global Services},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs}
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{caption}
+\usepackage{longtable}
+
+\title{Monthly Zoom Account Utilization Report}
+\author{Shambhala Global Services}
+\date{}
+
+\begin{document}
+\maketitle
+
+Uses data generated by: get-individual-history-data.R
+
+\hypertarget{overview}{%
+\section{Overview}\label{overview}}
+
+\begin{verbatim}
+## [1] "meetings_2020-01.Rds" "meetings_2020-02.Rds" "meetings_2020-03.Rds"
+## [4] "meetings_2020-04.Rds" "meetings_2020-05.Rds"
+\end{verbatim}
+
+\begin{verbatim}
+## [1] "2020-01 and 2020-05"
+\end{verbatim}
+
+\begin{longtable}[]{@{}llr@{}}
+\toprule
+Date & Topic & Participants\tabularnewline
+\midrule
+\endhead
+2020-01-04 & All-PT Call & 142\tabularnewline
+2020-01-05 & Holly Gayley on Hub call on resilience & 85\tabularnewline
+2020-01-12 & All-PT Call & 87\tabularnewline
+2020-02-01 & Nepal Questions and Answers & 52\tabularnewline
+2020-02-02 & Shambhala Board Webinar with Leaders 2/2/20 &
+146\tabularnewline
+2020-02-04 & Acharyas' Personal Meeting Room & 85\tabularnewline
+2020-02-06 & Acharyas' Personal Meeting Room & 57\tabularnewline
+2020-02-22 & Dharma Brat's Gathering & 68\tabularnewline
+2020-02-24 & SHAMBHALA DAY 2020 - YEAR OF THE IRON MOUSE &
+125\tabularnewline
+2020-03-15 & White Tara Practice (of March 15) with Acharya Simmer-Brown
+& 159\tabularnewline
+2020-03-15 & All-PT Meeting to Discuss Internal Survey Results &
+51\tabularnewline
+2020-03-17 & Cynthia MacKay's Personal Meeting Room & 65\tabularnewline
+2020-03-19 & Sara Lewis' Personal Meeting Room & 50\tabularnewline
+2020-03-19 & Cynthia MacKay's Personal Meeting Room & 58\tabularnewline
+2020-03-21 & All-PT Meeting to Discuss Internal Survey Results &
+72\tabularnewline
+2020-03-22 & Mimi Valiulis' Personal Meeting Room & 76\tabularnewline
+2020-03-22 & White Tara Practice of March 22 with Acharya Simmer-Brown &
+135\tabularnewline
+2020-03-23 & Nepal Trip Gathering & 94\tabularnewline
+2020-03-24 & Mimi Valiulis' Personal Meeting Room & 51\tabularnewline
+2020-03-26 & Mimi Valiulis' Personal Meeting Room & 65\tabularnewline
+2020-03-27 & Dorje Kasung's Personal Meeting Room & 198\tabularnewline
+2020-03-27 & L'art d'être humain, Shambhala Paris & 72\tabularnewline
+2020-03-28 & Susanne Vincent's Personal Meeting Room & 65\tabularnewline
+2020-03-29 & White Tara Practice Sessions with Acharya Judith
+Simmer-Brown & 256\tabularnewline
+2020-03-31 & Care \& Conduct Webinar: CPP Review & 97\tabularnewline
+2020-04-02 & Cynthia MacKay's Personal Meeting Room & 59\tabularnewline
+2020-04-02 & Shambhala DBA discussions & 69\tabularnewline
+2020-04-02 & Lungs for Nepal Group & 108\tabularnewline
+2020-04-03 & 105 Room's Zoom Meeting & 61\tabularnewline
+2020-04-04 & European Zoom Meeting & 52\tabularnewline
+2020-04-04 & 105 Room's Zoom Meeting & 62\tabularnewline
+2020-04-04 & Pilgrimage Meeting for Europe \#2 & 66\tabularnewline
+2020-04-04 & Cynthia MacKay's Personal Meeting Room & 52\tabularnewline
+2020-04-04 & 105 Room's Zoom Meeting & 138\tabularnewline
+2020-04-04 & 105 Room's Zoom Meeting & 658\tabularnewline
+2020-04-05 & 105 Room's Zoom Meeting & 107\tabularnewline
+2020-04-05 & Mimi Valiulis' Zoom Meeting & 74\tabularnewline
+2020-04-05 & SSA10-Zoom Meetings (2019-2020) & 145\tabularnewline
+2020-04-05 & White Tara Practice Sessions with Acharya Judith
+Simmer-Brown & 155\tabularnewline
+2020-04-08 & Jane Arthur's Personal Meeting Room & 52\tabularnewline
+2020-04-11 & All-PT Meeting for Conversation \#2 & 155\tabularnewline
+2020-04-12 & White Tara Practice Session with Acharya Judith
+Simmer-Brown (April 12) & 169\tabularnewline
+2020-04-12 & Pilgrimage Zoom Meeting & 576\tabularnewline
+2020-04-14 & Pilgrimage Zoom Meeting & 371\tabularnewline
+2020-04-16 & Desung \& SHWB with Tara & 140\tabularnewline
+2020-04-19 & April 19-White Tara Practice session / A. Judith
+Simmer-Brown (April 19) & 148\tabularnewline
+2020-04-19 & Foundations for Freedom-The Hinayana (Course 1) &
+170\tabularnewline
+2020-04-26 & White Tara Practice with A. Judith Simmer-Brown (April 26)
+& 124\tabularnewline
+2020-04-26 & This is the Moment / Earth Day Event with Judith
+Simmer-Brown (April 26) & 115\tabularnewline
+2020-05-03 & White Tara Practice with A. Judith Simmer-Brown (May 3) &
+131\tabularnewline
+2020-05-03 & Pilgrimage Group Meeting & 75\tabularnewline
+2020-05-10 & White Tara Practice with A. Judith Simmer-Brown (May 10) &
+157\tabularnewline
+2020-05-10 & 5-10-2020 Sunday Gathering - Acharya Fleet Maull &
+184\tabularnewline
+2020-05-17 & Vajrayogini Feast & 84\tabularnewline
+2020-05-17 & 5-17-2020 Sunday Gathering - Ani Pema Chödrön &
+1238\tabularnewline
+2020-05-21 & Sakyong Audience & 57\tabularnewline
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 128\tabularnewline
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 118\tabularnewline
+2020-05-23 & Board Member - Oath Ceremony & 65\tabularnewline
+2020-05-24 & 5-24-2020 Sunday Gathering - Acharya Arawana Hayashi &
+297\tabularnewline
+2020-05-31 & Foundations for Freedom-The Hinayana (Course 1) &
+107\tabularnewline
+2020-05-31 & 5-31-2020 Sunday Gathering - Acharya Suzann Duquette &
+153\tabularnewline
+\bottomrule
+\end{longtable}
+
+\begin{verbatim}
+##          Date
+## 1  2020-01-04
+## 2  2020-01-05
+## 3  2020-01-12
+## 4  2020-02-01
+## 5  2020-02-02
+## 6  2020-02-04
+## 7  2020-02-06
+## 8  2020-02-22
+## 9  2020-02-24
+## 10 2020-03-15
+## 11 2020-03-15
+## 12 2020-03-17
+## 13 2020-03-19
+## 14 2020-03-19
+## 15 2020-03-21
+## 16 2020-03-22
+## 17 2020-03-22
+## 18 2020-03-23
+## 19 2020-03-24
+## 20 2020-03-26
+## 21 2020-03-27
+## 22 2020-03-27
+## 23 2020-03-28
+## 24 2020-03-29
+## 25 2020-03-31
+## 26 2020-04-02
+## 27 2020-04-02
+## 28 2020-04-02
+## 29 2020-04-03
+## 30 2020-04-04
+## 31 2020-04-04
+## 32 2020-04-04
+## 33 2020-04-04
+## 34 2020-04-04
+## 35 2020-04-04
+## 36 2020-04-05
+## 37 2020-04-05
+## 38 2020-04-05
+## 39 2020-04-05
+## 40 2020-04-08
+## 41 2020-04-11
+## 42 2020-04-12
+## 43 2020-04-12
+## 44 2020-04-14
+## 45 2020-04-16
+## 46 2020-04-19
+## 47 2020-04-19
+## 48 2020-04-26
+## 49 2020-04-26
+## 50 2020-05-03
+## 51 2020-05-03
+## 52 2020-05-10
+## 53 2020-05-10
+## 54 2020-05-17
+## 55 2020-05-17
+## 56 2020-05-21
+## 57 2020-05-23
+## 58 2020-05-23
+## 59 2020-05-23
+## 60 2020-05-24
+## 61 2020-05-31
+## 62 2020-05-31
+##                                                                       Topic
+## 1                                                               All-PT Call
+## 2                                    Holly Gayley on Hub call on resilience
+## 3                                                               All-PT Call
+## 4                                               Nepal Questions and Answers
+## 5                               Shambhala Board Webinar with Leaders 2/2/20
+## 6                                           Acharyas' Personal Meeting Room
+## 7                                           Acharyas' Personal Meeting Room
+## 8                                                   Dharma Brat's Gathering
+## 9                               SHAMBHALA DAY 2020 - YEAR OF THE IRON MOUSE
+## 10              White Tara Practice (of March 15) with Acharya Simmer-Brown
+## 11                        All-PT Meeting to Discuss Internal Survey Results
+## 12                                   Cynthia MacKay's Personal Meeting Room
+## 13                                        Sara Lewis' Personal Meeting Room
+## 14                                   Cynthia MacKay's Personal Meeting Room
+## 15                        All-PT Meeting to Discuss Internal Survey Results
+## 16                                     Mimi Valiulis' Personal Meeting Room
+## 17                White Tara Practice of March 22 with Acharya Simmer-Brown
+## 18                                                     Nepal Trip Gathering
+## 19                                     Mimi Valiulis' Personal Meeting Room
+## 20                                     Mimi Valiulis' Personal Meeting Room
+## 21                                     Dorje Kasung's Personal Meeting Room
+## 22                                     L'art d'être humain, Shambhala Paris
+## 23                                  Susanne Vincent's Personal Meeting Room
+## 24            White Tara Practice Sessions with Acharya Judith Simmer-Brown
+## 25                                       Care & Conduct Webinar: CPP Review
+## 26                                   Cynthia MacKay's Personal Meeting Room
+## 27                                                Shambhala DBA discussions
+## 28                                                    Lungs for Nepal Group
+## 29                                                  105 Room's Zoom Meeting
+## 30                                                    European Zoom Meeting
+## 31                                                  105 Room's Zoom Meeting
+## 32                                         Pilgrimage Meeting for Europe #2
+## 33                                   Cynthia MacKay's Personal Meeting Room
+## 34                                                  105 Room's Zoom Meeting
+## 35                                                  105 Room's Zoom Meeting
+## 36                                                  105 Room's Zoom Meeting
+## 37                                              Mimi Valiulis' Zoom Meeting
+## 38                                          SSA10-Zoom Meetings (2019-2020)
+## 39            White Tara Practice Sessions with Acharya Judith Simmer-Brown
+## 40                                      Jane Arthur's Personal Meeting Room
+## 41                                       All-PT Meeting for Conversation #2
+## 42  White Tara Practice Session with Acharya Judith Simmer-Brown (April 12)
+## 43                                                  Pilgrimage Zoom Meeting
+## 44                                                  Pilgrimage Zoom Meeting
+## 45                                                  Desung & SHWB with Tara
+## 46 April 19-White Tara Practice session / A. Judith Simmer-Brown (April 19)
+## 47                          Foundations for Freedom-The Hinayana (Course 1)
+## 48               White Tara Practice with A. Judith Simmer-Brown (April 26)
+## 49 This is the Moment / Earth Day Event with Judith Simmer-Brown (April 26)
+## 50                  White Tara Practice with A. Judith Simmer-Brown (May 3)
+## 51                                                 Pilgrimage Group Meeting
+## 52                 White Tara Practice with A. Judith Simmer-Brown (May 10)
+## 53                         5-10-2020 Sunday Gathering - Acharya Fleet Maull
+## 54                                                        Vajrayogini Feast
+## 55                            5-17-2020 Sunday Gathering - Ani Pema Chödrön
+## 56                                                         Sakyong Audience
+## 57                                    SSA10- Q&A with Acharya John Rockwell
+## 58                                    SSA10- Q&A with Acharya John Rockwell
+## 59                                             Board Member - Oath Ceremony
+## 60                     5-24-2020 Sunday Gathering - Acharya Arawana Hayashi
+## 61                          Foundations for Freedom-The Hinayana (Course 1)
+## 62                     5-31-2020 Sunday Gathering - Acharya Suzann Duquette
+##    Participants
+## 1           142
+## 2            85
+## 3            87
+## 4            52
+## 5           146
+## 6            85
+## 7            57
+## 8            68
+## 9           125
+## 10          159
+## 11           51
+## 12           65
+## 13           50
+## 14           58
+## 15           72
+## 16           76
+## 17          135
+## 18           94
+## 19           51
+## 20           65
+## 21          198
+## 22           72
+## 23           65
+## 24          256
+## 25           97
+## 26           59
+## 27           69
+## 28          108
+## 29           61
+## 30           52
+## 31           62
+## 32           66
+## 33           52
+## 34          138
+## 35          658
+## 36          107
+## 37           74
+## 38          145
+## 39          155
+## 40           52
+## 41          155
+## 42          169
+## 43          576
+## 44          371
+## 45          140
+## 46          148
+## 47          170
+## 48          124
+## 49          115
+## 50          131
+## 51           75
+## 52          157
+## 53          184
+## 54           84
+## 55         1238
+## 56           57
+## 57          128
+## 58          118
+## 59           65
+## 60          297
+## 61          107
+## 62          153
+\end{verbatim}
+
+\captionsetup[table]{labelformat=empty,skip=1pt}
+\begin{longtable}{llr}
+\caption*{
+\large Large meetings between 2020-01 and 2020-05\\ 
+\small \\ 
+} \\ 
+\toprule
+Date & Topic & Participants \\ 
+\midrule
+2020-01-04 & All-PT Call & 142 \\ 
+2020-01-05 & Holly Gayley on Hub call on resilience & 85 \\ 
+2020-01-12 & All-PT Call & 87 \\ 
+2020-02-01 & Nepal Questions and Answers & 52 \\ 
+2020-02-02 & Shambhala Board Webinar with Leaders 2/2/20 & 146 \\ 
+2020-02-04 & Acharyas' Personal Meeting Room & 85 \\ 
+2020-02-06 & Acharyas' Personal Meeting Room & 57 \\ 
+2020-02-22 & Dharma Brat's Gathering & 68 \\ 
+2020-02-24 & SHAMBHALA DAY 2020 - YEAR OF THE IRON MOUSE & 125 \\ 
+2020-03-15 & White Tara Practice (of March 15) with Acharya Simmer-Brown & 159 \\ 
+2020-03-15 & All-PT Meeting to Discuss Internal Survey Results & 51 \\ 
+2020-03-17 & Cynthia MacKay's Personal Meeting Room & 65 \\ 
+2020-03-19 & Sara Lewis' Personal Meeting Room & 50 \\ 
+2020-03-19 & Cynthia MacKay's Personal Meeting Room & 58 \\ 
+2020-03-21 & All-PT Meeting to Discuss Internal Survey Results & 72 \\ 
+2020-03-22 & Mimi Valiulis' Personal Meeting Room & 76 \\ 
+2020-03-22 & White Tara Practice of March 22 with Acharya Simmer-Brown & 135 \\ 
+2020-03-23 & Nepal Trip Gathering & 94 \\ 
+2020-03-24 & Mimi Valiulis' Personal Meeting Room & 51 \\ 
+2020-03-26 & Mimi Valiulis' Personal Meeting Room & 65 \\ 
+2020-03-27 & Dorje Kasung's Personal Meeting Room & 198 \\ 
+2020-03-27 & L'art d'être humain, Shambhala Paris & 72 \\ 
+2020-03-28 & Susanne Vincent's Personal Meeting Room & 65 \\ 
+2020-03-29 & White Tara Practice Sessions with Acharya Judith Simmer-Brown & 256 \\ 
+2020-03-31 & Care \& Conduct Webinar: CPP Review & 97 \\ 
+2020-04-02 & Cynthia MacKay's Personal Meeting Room & 59 \\ 
+2020-04-02 & Shambhala DBA discussions & 69 \\ 
+2020-04-02 & Lungs for Nepal Group & 108 \\ 
+2020-04-03 & 105 Room's Zoom Meeting & 61 \\ 
+2020-04-04 & European Zoom Meeting & 52 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 62 \\ 
+2020-04-04 & Pilgrimage Meeting for Europe \#2 & 66 \\ 
+2020-04-04 & Cynthia MacKay's Personal Meeting Room & 52 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 138 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 658 \\ 
+2020-04-05 & 105 Room's Zoom Meeting & 107 \\ 
+2020-04-05 & Mimi Valiulis' Zoom Meeting & 74 \\ 
+2020-04-05 & SSA10-Zoom Meetings (2019-2020) & 145 \\ 
+2020-04-05 & White Tara Practice Sessions with Acharya Judith Simmer-Brown & 155 \\ 
+2020-04-08 & Jane Arthur's Personal Meeting Room & 52 \\ 
+2020-04-11 & All-PT Meeting for Conversation \#2 & 155 \\ 
+2020-04-12 & White Tara Practice Session with Acharya Judith Simmer-Brown (April 12) & 169 \\ 
+2020-04-12 & Pilgrimage Zoom Meeting & 576 \\ 
+2020-04-14 & Pilgrimage Zoom Meeting & 371 \\ 
+2020-04-16 & Desung \& SHWB with Tara & 140 \\ 
+2020-04-19 & April 19-White Tara Practice session / A. Judith Simmer-Brown (April 19) & 148 \\ 
+2020-04-19 & Foundations for Freedom-The Hinayana (Course 1) & 170 \\ 
+2020-04-26 & White Tara Practice with A. Judith Simmer-Brown (April 26) & 124 \\ 
+2020-04-26 & This is the Moment / Earth Day Event with Judith Simmer-Brown (April 26) & 115 \\ 
+2020-05-03 & White Tara Practice with A. Judith Simmer-Brown (May 3) & 131 \\ 
+2020-05-03 & Pilgrimage Group Meeting & 75 \\ 
+2020-05-10 & White Tara Practice with A. Judith Simmer-Brown (May 10) & 157 \\ 
+2020-05-10 & 5-10-2020 Sunday Gathering - Acharya Fleet Maull & 184 \\ 
+2020-05-17 & Vajrayogini Feast & 84 \\ 
+2020-05-17 & 5-17-2020 Sunday Gathering - Ani Pema Chödrön & 1238 \\ 
+2020-05-21 & Sakyong Audience & 57 \\ 
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 128 \\ 
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 118 \\ 
+2020-05-23 & Board Member - Oath Ceremony & 65 \\ 
+2020-05-24 & 5-24-2020 Sunday Gathering - Acharya Arawana Hayashi & 297 \\ 
+2020-05-31 & Foundations for Freedom-The Hinayana (Course 1) & 107 \\ 
+2020-05-31 & 5-31-2020 Sunday Gathering - Acharya Suzann Duquette & 153 \\ 
+\bottomrule
+\end{longtable}
+
+\includegraphics{quarterly-meeting-report_files/figure-latex/unnamed-chunk-4-1.png}
+\captionsetup[table]{labelformat=empty,skip=1pt}
+
+\begin{longtable}{llr}
+\caption*{
+\large Large meetings between 2020-01 and 2020-05\\ 
+\small \\ 
+} \\ 
+\toprule
+Date & Topic & Participants \\ 
+\midrule
+2020-01-04 & All-PT Call & 142 \\ 
+2020-01-05 & Holly Gayley on Hub call on resilience & 85 \\ 
+2020-01-12 & All-PT Call & 87 \\ 
+2020-02-01 & Nepal Questions and Answers & 52 \\ 
+2020-02-02 & Shambhala Board Webinar with Leaders 2/2/20 & 146 \\ 
+2020-02-04 & Acharyas' Personal Meeting Room & 85 \\ 
+2020-02-06 & Acharyas' Personal Meeting Room & 57 \\ 
+2020-02-22 & Dharma Brat's Gathering & 68 \\ 
+2020-02-24 & SHAMBHALA DAY 2020 - YEAR OF THE IRON MOUSE & 125 \\ 
+2020-03-15 & White Tara Practice (of March 15) with Acharya Simmer-Brown & 159 \\ 
+2020-03-15 & All-PT Meeting to Discuss Internal Survey Results & 51 \\ 
+2020-03-17 & Cynthia MacKay's Personal Meeting Room & 65 \\ 
+2020-03-19 & Sara Lewis' Personal Meeting Room & 50 \\ 
+2020-03-19 & Cynthia MacKay's Personal Meeting Room & 58 \\ 
+2020-03-21 & All-PT Meeting to Discuss Internal Survey Results & 72 \\ 
+2020-03-22 & Mimi Valiulis' Personal Meeting Room & 76 \\ 
+2020-03-22 & White Tara Practice of March 22 with Acharya Simmer-Brown & 135 \\ 
+2020-03-23 & Nepal Trip Gathering & 94 \\ 
+2020-03-24 & Mimi Valiulis' Personal Meeting Room & 51 \\ 
+2020-03-26 & Mimi Valiulis' Personal Meeting Room & 65 \\ 
+2020-03-27 & Dorje Kasung's Personal Meeting Room & 198 \\ 
+2020-03-27 & L'art d'être humain, Shambhala Paris & 72 \\ 
+2020-03-28 & Susanne Vincent's Personal Meeting Room & 65 \\ 
+2020-03-29 & White Tara Practice Sessions with Acharya Judith Simmer-Brown & 256 \\ 
+2020-03-31 & Care \& Conduct Webinar: CPP Review & 97 \\ 
+2020-04-02 & Cynthia MacKay's Personal Meeting Room & 59 \\ 
+2020-04-02 & Shambhala DBA discussions & 69 \\ 
+2020-04-02 & Lungs for Nepal Group & 108 \\ 
+2020-04-03 & 105 Room's Zoom Meeting & 61 \\ 
+2020-04-04 & European Zoom Meeting & 52 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 62 \\ 
+2020-04-04 & Pilgrimage Meeting for Europe \#2 & 66 \\ 
+2020-04-04 & Cynthia MacKay's Personal Meeting Room & 52 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 138 \\ 
+2020-04-04 & 105 Room's Zoom Meeting & 658 \\ 
+2020-04-05 & 105 Room's Zoom Meeting & 107 \\ 
+2020-04-05 & Mimi Valiulis' Zoom Meeting & 74 \\ 
+2020-04-05 & SSA10-Zoom Meetings (2019-2020) & 145 \\ 
+2020-04-05 & White Tara Practice Sessions with Acharya Judith Simmer-Brown & 155 \\ 
+2020-04-08 & Jane Arthur's Personal Meeting Room & 52 \\ 
+2020-04-11 & All-PT Meeting for Conversation \#2 & 155 \\ 
+2020-04-12 & White Tara Practice Session with Acharya Judith Simmer-Brown (April 12) & 169 \\ 
+2020-04-12 & Pilgrimage Zoom Meeting & 576 \\ 
+2020-04-14 & Pilgrimage Zoom Meeting & 371 \\ 
+2020-04-16 & Desung \& SHWB with Tara & 140 \\ 
+2020-04-19 & April 19-White Tara Practice session / A. Judith Simmer-Brown (April 19) & 148 \\ 
+2020-04-19 & Foundations for Freedom-The Hinayana (Course 1) & 170 \\ 
+2020-04-26 & White Tara Practice with A. Judith Simmer-Brown (April 26) & 124 \\ 
+2020-04-26 & This is the Moment / Earth Day Event with Judith Simmer-Brown (April 26) & 115 \\ 
+2020-05-03 & White Tara Practice with A. Judith Simmer-Brown (May 3) & 131 \\ 
+2020-05-03 & Pilgrimage Group Meeting & 75 \\ 
+2020-05-10 & White Tara Practice with A. Judith Simmer-Brown (May 10) & 157 \\ 
+2020-05-10 & 5-10-2020 Sunday Gathering - Acharya Fleet Maull & 184 \\ 
+2020-05-17 & Vajrayogini Feast & 84 \\ 
+2020-05-17 & 5-17-2020 Sunday Gathering - Ani Pema Chödrön & 1238 \\ 
+2020-05-21 & Sakyong Audience & 57 \\ 
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 128 \\ 
+2020-05-23 & SSA10- Q\&A with Acharya John Rockwell & 118 \\ 
+2020-05-23 & Board Member - Oath Ceremony & 65 \\ 
+2020-05-24 & 5-24-2020 Sunday Gathering - Acharya Arawana Hayashi & 297 \\ 
+2020-05-31 & Foundations for Freedom-The Hinayana (Course 1) & 107 \\ 
+2020-05-31 & 5-31-2020 Sunday Gathering - Acharya Suzann Duquette & 153 \\ 
+\bottomrule
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{meetings_in_quarter <-}\StringTok{ }\NormalTok{meetings_in_quarter }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{filter}\NormalTok{(}\OperatorTok{!}\KeywordTok{is.na}\NormalTok{(weekday)) }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{start_hour =} \KeywordTok{hour}\NormalTok{(start_time),}
+         \DataTypeTok{meeting_size =} \KeywordTok{if_else}\NormalTok{(participants_count }\OperatorTok{>}\StringTok{ }\NormalTok{big_meeting_cut_off, }\StringTok{"Big"}\NormalTok{, }\StringTok{"Smaller"}\NormalTok{)) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n_weekday <-}\StringTok{ }\NormalTok{meetings_in_quarter }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(weekday)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_bar}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Number of meetings"}\NormalTok{,}
+       \DataTypeTok{subtitle =} \KeywordTok{paste0}\NormalTok{(}\StringTok{"By day of week between "}\NormalTok{, month_range),}
+       \DataTypeTok{y =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{x =} \OtherTok{NULL}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{facet_wrap}\NormalTok{(}\OperatorTok{~}\StringTok{ }\NormalTok{meeting_size) }
+
+\NormalTok{n_weekday  }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{quarterly-meeting-report_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{size_weekday <-}\StringTok{ }\NormalTok{meetings_in_quarter }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(weekday, participants_count)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_jitter}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \KeywordTok{paste0}\NormalTok{(}\StringTok{"Meeting participants by week day between "}\NormalTok{, month_range),}
+       \DataTypeTok{y =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{x =} \OtherTok{NULL}\NormalTok{) }
+  \CommentTok{# facet_wrap(~ meeting_size) }
+ 
+\NormalTok{size_weekday }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{quarterly-meeting-report_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{count_by_hour <-}\StringTok{ }\NormalTok{meetings_in_quarter }\OperatorTok{%>%}\StringTok{ }
+\StringTok{  }\KeywordTok{ggplot}\NormalTok{(}\KeywordTok{aes}\NormalTok{(start_hour, participants_count)) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{geom_col}\NormalTok{() }\OperatorTok{+}
+\StringTok{  }\KeywordTok{labs}\NormalTok{(}\DataTypeTok{title =} \StringTok{"Total participants"}\NormalTok{,}
+                      \DataTypeTok{subtitle =} \KeywordTok{paste0}\NormalTok{(}\StringTok{"by hour of day between "}\NormalTok{, month_range),}
+       \DataTypeTok{y =} \OtherTok{NULL}\NormalTok{, }\DataTypeTok{x =} \StringTok{"GMT"}\NormalTok{) }\OperatorTok{+}
+\StringTok{  }\KeywordTok{facet_grid}\NormalTok{(}\OperatorTok{~}\StringTok{ }\NormalTok{meeting_size)}
+ 
+\NormalTok{count_by_hour }
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{quarterly-meeting-report_files/figure-latex/unnamed-chunk-8-1.pdf}
+paste the two plots together
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{patched <-}\StringTok{ }\NormalTok{n_weekday }\OperatorTok{/}\StringTok{ }\NormalTok{count_by_hour}
+\NormalTok{patched }\OperatorTok{+}\StringTok{ }\KeywordTok{plot_annotation}\NormalTok{(}
+  \DataTypeTok{caption =} \KeywordTok{paste0}\NormalTok{(}\StringTok{"'Big' means more than "}\NormalTok{, big_meeting_cut_off, }\StringTok{" participants"}\NormalTok{ )}
+\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{quarterly-meeting-report_files/figure-latex/unnamed-chunk-9-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{ggsave}\NormalTok{(here}\OperatorTok{::}\KeywordTok{here}\NormalTok{(}\StringTok{"img"}\NormalTok{, }\KeywordTok{paste0}\NormalTok{(save_file_tag, }\StringTok{"_time.png"}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\end{document}

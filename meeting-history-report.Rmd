@@ -1,0 +1,47 @@
+---
+title: "Monthly Zoom Account Utilization Report"
+author: "Shambhala Global Services"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# API documentation: https://zoom.github.io/api/#introduction
+# API playground: https://developer.zoom.us/playground/
+#
+# to authorize gmailr, on the server you may need to run with this option set:
+#    options(httr_oob_default=TRUE)
+#
+# * Retrieve future scheduled for instructional Zoom accounts
+# * send a data table to a list of people
+# * save a .Rmd file
+# * run every Friday morning
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Overview
+
+```{r, echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+library(googlesheets)
+library(DT)
+library(gt)
+suppressPackageStartupMessages(library(gmailr))
+library(here)
+pagebreak <- function() {
+  if (knitr::is_latex_output())
+    return("\\newpage")
+  else
+    return('<div style="page-break-before: always;" />')
+}
+```
+
+
+```{r, echo=FALSE, message=FALSE}
+rds_list <- system2("ls", "data/meet*.Rds", stdout = TRUE)
+as.list(rds_list)
+
+cum_hist <- map_df(rds_list, ~read_rds(here( .x)))
+```

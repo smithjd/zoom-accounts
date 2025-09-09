@@ -1,0 +1,149 @@
+---
+title: "Shambhala Sunday Gatherings Webinar Report"
+author: "SGS-IT / John D. Smith"
+date: "5/26/2020"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(ggtext))
+suppressPackageStartupMessages(library(lubridate))
+suppressPackageStartupMessages(library(googlesheets4))
+suppressPackageStartupMessages(library(glue))
+suppressPackageStartupMessages(library(janitor))
+library(hms)
+library(here)
+
+
+# zoom_csv_file <- "UserQos_851625562.csv" # foundatiaons for freedom (hinayana)
+# zoom_csv_file <- "UserQos_91989154467.csv" # fleet
+# zoom_csv_file <- "UserQos_93805528043.csv" # duquette
+# zoom_csv_file <- "UserQos_98714532908.csv" # white tara
+# zoom_csv_file <- "UserQos_99604527724.csv" #hayashi
+zoom_csv_file <- "UserQos_151888753.csv" #??
+
+```
+
+```{r, echo=FALSE, message= FALSE, error=FALSE, warning=FALSE}
+meeting_header <- read_csv(here::here("data", zoom_csv_file), 
+                               n_max = 1) %>% 
+  clean_names() %>% 
+  mutate(start_time =  mdy_hm(start_time),
+         end_time = as_hms(end_time)) %>% 
+  select(meeting_id, topic, host, email, start_time, end_time, duration_hh_mm_ss, screen_sharing, recording)
+
+event_date <- as.character(as_date(meeting_header$start_time))
+topic <- meeting_header$topic
+
+meeting_header <- meeting_header %>% 
+  mutate(duration_decimal_hours = round(as.numeric(
+    meeting_header$duration_hh_mm_ss) / (60*60), digits = 2)) %>% 
+  select(-end_time, -duration_hh_mm_ss)
+
+meeting_header_transposed <- as.data.frame(t(as.matrix(meeting_header)))
+meeting_header_transposed$meeting <- names(meeting_header) 
+
+meeting_header_transposed <- meeting_header_transposed %>% 
+  select(meeting, value = V1)
+
+csv_file_name <- paste0(as.Date(meeting_header$start_time),"_webinar.csv")
+
+write_csv(meeting_header, here::here("data", csv_file_name))
+```
+
+
+```{r, echo=FALSE, message= FALSE, error=FALSE, warning=FALSE}
+event_participation_detail <- read_csv(here::here("data", zoom_csv_file), 
+                               skip = 3, locale = locale(encoding = 'UTF-8')) %>% 
+  clean_names() %>% 
+  separate(leave_time, into= c("leave_time_hms", "event"), sep = "[\\(\\)]") %>% 
+  separate(event, into= c( "event", "reason"), sep = ".Reason: ") %>% 
+  mutate(
+    join_date = ymd_hms(paste0(event_date, ":",  
+                               as.character(as_hms(join_time)))),
+  leave_date = parse_date_time(paste0(event_date, " ",  leave_time_hms), '%Y-%m-d %I:%M %p'),
+  session_duration = as.numeric(leave_date - join_date) / 60,
+  event_type = str_trim(str_replace(event, participant, ""))) %>% 
+  select(participant, location, event, event_type, reason, join_date, leave_date, session_duration)
+  
+event_participation_summary <- event_participation_detail %>% 
+  group_by(participant, location) %>% 
+  summarize(session_duration = sum(session_duration), 
+            join_date = min(join_date),
+            leave_date = min(leave_date),
+            login = n()
+            ) %>% 
+  separate(location, into = c("city", "country", "junk"), sep = "[()]") %>% 
+  select(-junk) %>% 
+  ungroup()
+
+```
+
+```{r, eval=FALSE, echo=FALSE}
+ss <- gs4_create(name = topic,
+   sheets = list(
+   'Event Description' = meeting_header_transposed,
+    'Participant detail' = event_participation_summary))
+```
+
+```{r, echo=FALSE}
+event_participation_summary %>% ggplot() +
+  geom_histogram(aes(join_date), fill = "green", alpha = .4, bins = 70) +
+  geom_histogram(aes(leave_date), fill = "red", alpha = .4, bins = 70) +
+  labs(x = "When", 
+       y = "Participants",
+       title = glue("<span style= 'color:green;'>Arrival</span> and 
+       <span style = 'color:red;'>departure</span> times for the ",  {nrow(event_participation_summary)}, " participants"),
+       caption = topic) +
+  theme_minimal() +
+  theme(
+    plot.title = element_markdown(lineheight = 1.1),
+    legend.text = element_markdown(size = 11)
+  )
+```
+
+```{r, echo=FALSE, fig.height=2.5}
+event_participation_detail %>% ggplot(aes(reason)) +
+  geom_bar() +
+  coord_flip() +
+  labs(x = NULL, title = "How did connections to the webinar end?", 
+       caption = topic)
+```
+
+
+```{r, echo=FALSE}
+event_participation_summary %>% ggplot(aes(country)) +
+  geom_bar() +
+  coord_flip() +
+  labs(x = NULL, title = "Where did participants come from?", 
+       caption = topic)
+```
+
+
+```{r, echo=FALSE, message= FALSE, error=FALSE, warning=FALSE}
+event_participation_summary %>% ggplot(aes(session_duration)) +
+  geom_histogram() +
+  # coord_flip() +
+  labs(x = "Minutes", 
+       y = "Participants",
+       title = "How long were people logged on?", 
+       caption = topic)
+```
+
+```{r}
+test <- event_participation_summary %>% 
+  filter(country == "ES ")
+
+test2 <- test[c(1,3:9,11:17),]
+```
+
+
+```{r}
+# gs4_auth()
+ss <- gs4_create(name = "test",
+   # sheets = list("test" = mtcars) )
+   sheets = list("test" = test) )
+```
+

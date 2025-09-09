@@ -1,0 +1,77 @@
+---
+title: "Time of day utilization"
+author: "John D. Smith"
+date: "4/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+# API documentation: https://zoom.github.io/api/#introduction
+# API playground: https://developer.zoom.us/playground/
+#
+# to authorize gmailr, on the server you may need to run with this option set:
+#    options(httr_oob_default=TRUE)
+#
+# * Retrieve future scheduled for instructional Zoom accounts
+# * send a data table to a list of people
+# * save a .Rmd file
+# * run every Friday morning
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+# Overview
+
+```{r, echo=FALSE, message=FALSE}
+suppressPackageStartupMessages(library(tidyverse))
+suppressPackageStartupMessages(library(lubridate))
+library(glue)
+suppressPackageStartupMessages(library(gmailr))
+library(ggridges)
+library(here)
+
+zoom_user_list <- read_rds(here("data", "zoom_user_list.Rds")) %>% 
+  mutate(name = paste(first_name, last_name))
+
+past_meetings <- read_rds(here("data", "past_meetings.Rds"))
+
+report_start_date <- as.Date(min(past_meetings$start_time, na.rm = TRUE))
+report_end_date <- as.Date(max(past_meetings$start_time, na.rm = TRUE))
+```
+
+```{r}
+past_meetings %>% count(dept)
+```
+
+```{r}
+select_department <- "Shambhala Online"
+select_department <- "Kalapa Media"
+select_department <- "Shambhala Board"
+select_department <- "Process Team"
+```
+
+
+```{r }
+
+past_meetings %>% 
+  filter(dept == select_department) %>% 
+  ggplot(aes(x = start_time_only, y = host_email)) +
+  scale_x_time(limits = c(0, 96400)) +
+  geom_density_ridges() +
+  labs(title = glue("Time of day utilization for ", select_department),
+       x = "GMT time",
+       y = NULL)
+
+```
+
+```{r}
+odd_times <- 
+  past_meetings %>% 
+  mutate(start_number = as.numeric(start_time_only)) %>% 
+  filter(host_email == "201room@shambhalaonline.org" )
+  # filter(host_email == "201room@shambhalaonline.org" & start_time_only > (4*60*60))
+
+
+```
+
