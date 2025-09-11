@@ -59,7 +59,7 @@
         left + top,
         dx: 0in,      // Position at left edge
         dy: 0in,      // Position at top edge
-        image("SI-sunburst.png", width: 1.12in)
+        image("_extensions/sgs-report/SI-sunburst.png", width: 1.12in)
       )
     ]
   )

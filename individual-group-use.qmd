@@ -26,8 +26,20 @@ library(ourmirror)
 
 zoom_events <- read_rds(here("data", "zoom_events.rds"))
 
-min_date <- min(zoom_events$date)
-max_date <- max(zoom_events$date)
+min_date <- min(zoom_events$date, na.rm = TRUE)
+max_date <- max(zoom_events$date, na.rm = TRUE)
+date_breaks <- seq.Date(from = min_date, to = max_date, by = "3 months")
+
+jan_2025 <- as.Date("2025-01-01")
+if (jan_2025 >= min_date && jan_2025 <= max_date && !jan_2025 %in% date_breaks) {
+  date_breaks <- sort(c(date_breaks, jan_2025))
+}
+
+custom_labels <- ifelse(
+  format(date_breaks, "%m") == "01" | date_breaks == min_date,
+  paste(format(date_breaks, "%b"), format(date_breaks, "%Y"), sep = "\n"),
+  format(date_breaks, "%b")
+)
 ```
 
 ## Background
@@ -44,22 +56,22 @@ Regular staff meetings are the core of SGS administration.
 
 ```{r}
 #| out.width: "100%"
- zoom_events |>
+
+
+
+zoom_events |>
    filter(str_detect(host, "Tara"), str_detect(topic, "Staff"),
           participants > 1) |> 
   ggplot(aes(date, participants, color = topic)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 19.5,
-            label = "2025 ————>") +
   geom_point(size = 3) +
    geom_line() +
-  # geom_smooth(n = 2, se = FALSE) +
   scale_x_date(
-    date_labels = "%b %d",
-    date_breaks = "3 months",
-    limits = c(min_date, max_date)
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 20)) +
   labs(
@@ -90,16 +102,13 @@ zoom_activity |>
   ggplot(aes(date, total_hours, color = host)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 10000,
-            label = "2025 ————>") +
-  # geom_smooth(se = FALSE, n = 3) +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
-    date_labels = "%b %d",
-    date_breaks = "3 months",
-    limits = c(min_date, max_date)
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 10000), labels = label_comma()) +
   labs(
@@ -170,15 +179,13 @@ recordings_summary |>
   ggplot(aes(date, events, color = host)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 35,
-            label = "2025 ————>") +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
-    date_labels = "%b %d",
-    date_breaks = "3 months",
-    limits = c(min_date, max_date)
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 35)) +
   labs(
@@ -201,15 +208,13 @@ recordings_summary |>
   ggplot(aes(date, total_participants, color = host)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 2000,
-            label = "2025 ————>") +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
-    date_labels = "%b %d",
-    date_breaks = "3 months",
-    limits = c(min_date, max_date)
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 2000), labels = label_comma()) +
   labs(
@@ -241,17 +246,16 @@ individual |>
   ggplot(aes(date, participants)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 100,
-            label = "2025 ————>") +
   geom_smooth(method= "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
   geom_point(data = individual |> filter(participants > 55),
              aes(date, participants), size = 3) +
-  scale_x_date(date_labels = "%b %d", 
-               date_breaks = "3 months",
-               limits = c(min_date, max_date)
-               ) +
+  scale_x_date(
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
+  ) +
   scale_y_continuous(limits = c(0, 100)) +
   labs(title = "Participation in Sunday Gatherings",
        subtitle = "Half of 2024 through August of 2025",
@@ -270,16 +274,15 @@ individual <- zoom_events |>
 individual |> 
   ggplot(aes(date, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 125,
-            label = "2025 ————>") +
   geom_smooth(method= "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
   # geom_text_repel(aes(label = meeting_number)) +
-  scale_x_date(date_labels = "%b %d", 
-               date_breaks = "3 months",
-               limits = c(min_date, max_date)
-               ) +
+  scale_x_date(
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
+  ) +
   scale_y_continuous(limits = c(0, 125)) +
   labs(title = "Leadership Forums",
        subtitle = "Half of 2024 through August of 2025",
@@ -299,16 +302,15 @@ individual <- zoom_events |>
 
 individual |> ggplot(aes(date, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-   annotate("text", x = as.Date("2025-02-10"), 
-            y = 100,
-            label = "2025 ————>") +
   geom_smooth(method= "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
   # geom_text_repel(aes(label = meeting_number)) +
-  scale_x_date(date_labels = "%b %d", 
-               date_breaks = "3 months",
-               limits = c(min_date, max_date)
-               ) +
+  scale_x_date(
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
+  ) +
   scale_y_continuous(limits = c(0,100)) +
   labs(title = "P&E Leadership Calls",
        subtitle = "Half of 2024 through August of 2025",
