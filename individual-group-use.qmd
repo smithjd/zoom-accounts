@@ -26,8 +26,8 @@ library(ourmirror)
 
 zoom_events <- read_rds(here("data", "zoom_events.rds"))
 
-min_date <- min(zoom_events$date, na.rm = TRUE)
-max_date <- max(zoom_events$date, na.rm = TRUE)
+min_date <- min(zoom_events$month, na.rm = TRUE)
+max_date <- max(zoom_events$month, na.rm = TRUE)
 date_breaks <- seq.Date(from = min_date, to = max_date, by = "3 months")
 
 jan_2025 <- as.Date("2025-01-01")
@@ -62,8 +62,8 @@ Regular staff meetings are the core of SGS administration.
 zoom_events |>
    filter(str_detect(host, "Tara"), str_detect(topic, "Staff"),
           participants > 1) |> 
-  ggplot(aes(date, participants, color = topic)) +
-   geom_vline(xintercept = date("2025-01-01"), 
+  ggplot(aes(month, participants, color = topic)) +
+   geom_vline(xintercept = month("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_point(size = 3) +
    geom_line() +
@@ -96,11 +96,11 @@ zoom_activity <- zoom_events |>
   filter(participants > 1) |> 
   mutate(total_hours = (duration_hh_mm_ss * participants)/3600 ,
          host = ifelse(str_detect(host, "Room") & ! str_detect(host, "201"), "Shambhla Online", "Other")) |> 
-  summarise(total_hours = sum(total_hours), .by = c(date, host))
+  summarise(total_hours = sum(total_hours), .by = c(month, host))
 
 zoom_activity |>
-  ggplot(aes(date, total_hours, color = host)) +
-   geom_vline(xintercept = date("2025-01-01"), 
+  ggplot(aes(month, total_hours, color = host)) +
+   geom_vline(xintercept = month("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_point(size = 3) +
   geom_line() +
@@ -145,14 +145,14 @@ Shambhala Online operates at a much different scale than the rest of SGS in its 
 recordings <- zoom_events |>
   filter(recording == "Yes", minutes(duration_hh_mm_ss) >= 25) |>
   mutate(
-    yr_mon = paste(year(date), "-", month(date)),
+    yr_mon = paste(year(month), "-", month(month)),
     host = if_else(str_detect(host, "Room"), "Shambhala Online", host)
   ) |>
   summarise(
     events = n(),
     average_duration = as.numeric(sum(duration_hh_mm_ss) / 3600) / n(),
     total_participants = sum(participants),
-    .by = c(yr_mon, date, host)
+    .by = c(yr_mon, month, host)
   )
 
 so_recordings_summary <- recordings |> 
@@ -162,7 +162,7 @@ non_so_recordings_summary <- recordings |>
   filter(host != "Shambhala Online") |> 
   summarise(events = mean(events), average_duration = mean(average_duration),
             total_participants = mean(total_participants),
-            .by = c(yr_mon, date)) |> 
+            .by = c(yr_mon, month)) |> 
   mutate(host = "All others")
 
 recordings_summary <- bind_rows(so_recordings_summary, non_so_recordings_summary)
@@ -176,7 +176,7 @@ In these two graphs, Shambhala Online **totals** are contrasted with **averages*
 ```{r}
 #| out.width: "100%"
 recordings_summary |>
-  ggplot(aes(date, events, color = host)) +
+  ggplot(aes(month, events, color = host)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_point(size = 3) +
@@ -205,7 +205,7 @@ Not only are there **more** Shambhala Online events, those events have more part
 ```{r}
 #| out.width: "100%"
 recordings_summary |>
-  ggplot(aes(date, total_participants, color = host)) +
+  ggplot(aes(month, total_participants, color = host)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_point(size = 3) +
@@ -243,13 +243,13 @@ individual <- zoom_events |>
 
 individual |> 
   filter(participants < 55) |> 
-  ggplot(aes(date, participants)) +
+  ggplot(aes(month, participants)) +
    geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_smooth(method= "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
   geom_point(data = individual |> filter(participants > 55),
-             aes(date, participants), size = 3) +
+             aes(month, participants), size = 3) +
   scale_x_date(
     labels = custom_labels,
     breaks = date_breaks,
@@ -272,7 +272,7 @@ individual <- zoom_events |>
         hour(duration_hh_mm_ss) >= 1 ) 
 
 individual |> 
-  ggplot(aes(date, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
+  ggplot(aes(month, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
   geom_smooth(method= "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
@@ -296,13 +296,13 @@ individual |>
 individual <- zoom_events |> 
   filter(str_detect(host, "Jeff"), str_detect(topic, "Leader"),
          participants > 1 ) |> 
-  mutate(date = floor_date(date, "month")) |> 
+  mutate(month = floor_date(month, "month")) |> 
   summarise(
-    participants = sum(participants), .by = date)
+    participants = sum(participants), .by = month)
 
-individual |> ggplot(aes(date, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
+individual |> ggplot(aes(month, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
               color = "yellow", alpha = .5, linewidth = 2) +
-  geom_smooth(method= "lm", se= FALSE, color = "grey80") +
+  geom_smooth(method = "lm", se= FALSE, color = "grey80") +
   geom_point(size = 3) +
   # geom_text_repel(aes(label = meeting_number)) +
   scale_x_date(

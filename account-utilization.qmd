@@ -22,7 +22,7 @@ zoom_events <- list.files(path = here("raw-data"),
   map_df(read_csv) |> 
   clean_names() |>
   mutate(start_time = mdy_hms(start_time),
-         date = as.Date(floor_date(start_time, unit = "month")))
+         month = as.Date(floor_date(start_time, unit = "month")))
 
 write_rds(zoom_events, here("data", "zoom_events.rds"))
 ```
