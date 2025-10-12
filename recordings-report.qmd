@@ -1,0 +1,12 @@
+```{r}
+library(tidyverse)
+library(fs)
+recordings <- read_csv("./raw-recordings/zoomus_recordings__20251005.csv")
+usethis::use_air()
+```
+
+``` r
+---
+
+---
+```

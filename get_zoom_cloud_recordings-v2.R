@@ -158,7 +158,7 @@ flatten_recordings <- function(recordings_list) {
       # If no recording files, just return meeting info
       as_tibble(main_fields)
     }
-  })
+  } )
   
   # Clean up data types
   recordings_df <- recordings_df %>%

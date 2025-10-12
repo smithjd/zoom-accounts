@@ -10,6 +10,7 @@
 //   - https://github.com/typst/templates
 
 #let article(
+  doc,
   title: none,
   authors: none,
   date: none,
@@ -23,8 +24,7 @@
   font: ("Gandhi Sans"),
   fontsize: 14pt,
   sectionnumbering: none,
-  toc: false,
-  doc,
+  toc: false
 ) = {
   set page(
     paper: paper,
@@ -34,7 +34,7 @@
       #grid(
         columns: (1fr, 1fr),
         [#if file != none [#file] else [No file parameter]],
-        align(right)[#counter(page).display()]
+        align(right)[#context counter(page).display()]
       )
     ],
     background: [
