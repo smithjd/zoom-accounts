@@ -8,7 +8,12 @@ format:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, error = FALSE, warning = FALSE)
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  error = FALSE,
+  warning = FALSE
+)
 library(here)
 library(tidyverse)
 library(janitor)
@@ -31,7 +36,9 @@ max_date <- max(zoom_events$month, na.rm = TRUE)
 date_breaks <- seq.Date(from = min_date, to = max_date, by = "3 months")
 
 jan_2025 <- as.Date("2025-01-01")
-if (jan_2025 >= min_date && jan_2025 <= max_date && !jan_2025 %in% date_breaks) {
+if (
+  jan_2025 >= min_date && jan_2025 <= max_date && !jan_2025 %in% date_breaks
+) {
   date_breaks <- sort(c(date_breaks, jan_2025))
 }
 
@@ -48,25 +55,79 @@ ZOOM has become an everyday feature of life in Shambhala. We are usually only aw
 
 Recently, detailed records of each meeting or event held on Zoom since June 2024 have become available. Those records detail the meeting's host, the number of participants, the event date, whether it was recorded, and its duration. All of this data can be summarized by month to get a sense of the level of activity and trends over time.
 
-(In the following graph, the yellow line represents January 1, 2025.)
+## Daytime for Shambhala
 
-## Scale of ZOOM use
-
-Regular staff meetings are the core of SGS administration.
+Here are the busy-times for Shambhala:
 
 ```{r}
 #| out.width: "100%"
 
+zoom_heatmap_data <- zoom_events |>
+  mutate(
+    start_time = start_time + hours(3), # Add 3 hours first
+    group = ifelse(str_detect(host, "Room"), "Shambhala Online", "Other"),
+    hour = hour(start_time),
+    day_of_week = wday(start_time, label = TRUE, abbr = FALSE)
+  ) |>
+  count(group, hour, day_of_week)
 
+# Create the heatmap
+ggplot(zoom_heatmap_data, aes(x = hour, y = day_of_week, fill = n)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  scale_fill_viridis_c(option = "plasma", name = "Number of\nEvents") +
+  scale_x_continuous(breaks = seq(0, 24, by = 3), expand = c(0, 0)) +
+  labs(
+    title = "Zoom Events by Time of Day and Day of Week",
+    subtitle = paste(
+      "Total number of events between ",
+      month(min_date, label = TRUE),
+      year(min_date),
+      "and",
+      month(max_date, label = TRUE),
+      year(max_date)
+    ),
+    x = "Hour of Day, Eastern Time",
+    y = NULL
+  ) +
+  theme_minimal() +
+  facet_wrap(~group) +
+  ourmirror::mirror_theme() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.spacing = unit(.75, "cm")
+  )
+
+```
+
+
+```{=typst}
+#pagebreak()
+```
+
+## Scale of ZOOM use
+
+Regular staff meetings are the core of SGS administration. (In the following graph, the yellow line represents January 1, 2025.)
+
+
+```{r}
+#| out.width: "100%"
 
 zoom_events |>
-   filter(str_detect(host, "Tara"), str_detect(topic, "Staff"),
-          participants > 1) |> 
+  filter(
+    str_detect(host, "Tara"),
+    str_detect(topic, "Staff"),
+    participants > 1
+  ) |>
   ggplot(aes(month, participants, color = topic)) +
-   geom_vline(xintercept = month("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
+  geom_vline(
+    xintercept = month("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
   geom_point(size = 3) +
-   geom_line() +
+  geom_line() +
   scale_x_date(
     labels = custom_labels,
     breaks = date_breaks,
@@ -85,23 +146,32 @@ zoom_events |>
 
 ```
 
-
-To get a sense of the scale of SGS use, look at the length of zoom meetings (in hours) multiplied by the number of participants.  The data doesn't distinguish between internal use within SGS and the hours that our community as a whole spends on ZOOM in events hosted by SGS.
+To get a sense of the scale of SGS use, look at the length of zoom meetings (in hours) multiplied by the number of participants. The data doesn't distinguish between internal use within SGS and the hours that our community as a whole spends on ZOOM in events hosted by SGS.
 
 ```{r}
 #| out.width: 100%
 
 # out.height: 3in
-zoom_activity <- zoom_events |> 
-  filter(participants > 1) |> 
-  mutate(total_hours = (duration_hh_mm_ss * participants)/3600 ,
-         host = ifelse(str_detect(host, "Room") & ! str_detect(host, "201"), "Shambhla Online", "Other")) |> 
+zoom_activity <- zoom_events |>
+  filter(participants > 1) |>
+  mutate(
+    total_hours = (duration_hh_mm_ss * participants) / 3600,
+    host = ifelse(
+      str_detect(host, "Room") & !str_detect(host, "201"),
+      "Shambhla Online",
+      "Other"
+    )
+  ) |>
   summarise(total_hours = sum(total_hours), .by = c(month, host))
 
 zoom_activity |>
   ggplot(aes(month, total_hours, color = host)) +
-   geom_vline(xintercept = month("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
+  geom_vline(
+    xintercept = month("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
@@ -131,13 +201,11 @@ Total video activity in Shambhala is greater than this, since many Zoom recordin
 
 ## Recordings
 
-
 In addition to all the other functions that Zoom offers, recording a meeting to ZOOM's cloud storage is convenient and enables a meeting or class to be reviewed, sharing it with others who missed it live, or for transfer and distribution via Vimeo, in the case of Shambhala Online.
 
 Only 10% of the total zoom meetings between June 2024 and the present were recorded. We pay extra for Zoom recordings that we leave in the cloud for too long. In the 2nd quarter of 2025, SGS paid about \$350 for cloud storage overages.
 
 ## Scale Differences in the Use of Recordings
-
 
 Shambhala Online operates at a much different scale than the rest of SGS in its use of Zoom and the functions of recordings. Shambhala Online has 9 different accounts that are used together and somewhat interchangeably. To show this difference in scale, the following graphs **add up** Shambhala Online activity (where different accounts share an overall function) and contrast it with the individual **averages** of other SGS Zoom accounts (which have distinct functions and are generally not instructional).
 
@@ -155,17 +223,23 @@ recordings <- zoom_events |>
     .by = c(yr_mon, month, host)
   )
 
-so_recordings_summary <- recordings |> 
-  filter(host == "Shambhala Online") 
+so_recordings_summary <- recordings |>
+  filter(host == "Shambhala Online")
 
-non_so_recordings_summary <- recordings |> 
-  filter(host != "Shambhala Online") |> 
-  summarise(events = mean(events), average_duration = mean(average_duration),
-            total_participants = mean(total_participants),
-            .by = c(yr_mon, month)) |> 
+non_so_recordings_summary <- recordings |>
+  filter(host != "Shambhala Online") |>
+  summarise(
+    events = mean(events),
+    average_duration = mean(average_duration),
+    total_participants = mean(total_participants),
+    .by = c(yr_mon, month)
+  ) |>
   mutate(host = "All others")
 
-recordings_summary <- bind_rows(so_recordings_summary, non_so_recordings_summary)
+recordings_summary <- bind_rows(
+  so_recordings_summary,
+  non_so_recordings_summary
+)
 ```
 
 ```{=typst}
@@ -177,8 +251,12 @@ In these two graphs, Shambhala Online **totals** are contrasted with **averages*
 #| out.width: "100%"
 recordings_summary |>
   ggplot(aes(month, events, color = host)) +
-   geom_vline(xintercept = date("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
+  geom_vline(
+    xintercept = date("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
@@ -206,8 +284,12 @@ Not only are there **more** Shambhala Online events, those events have more part
 #| out.width: "100%"
 recordings_summary |>
   ggplot(aes(month, total_participants, color = host)) +
-   geom_vline(xintercept = date("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
+  geom_vline(
+    xintercept = date("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
   geom_point(size = 3) +
   geom_line() +
   scale_x_date(
@@ -231,25 +313,30 @@ recordings_summary |>
 
 ## Participation in Recorded Regularly Scheduled Online Offerings
 
-
 Regularly-scheduled gatherings presented by Shambhala Online and SGS deparments let us see activity trends.
 
 ```{r}
 #| out.width: "100%"
-#| 
-individual <- zoom_events |> 
-  filter(str_detect(topic, "Sunday Gatherings"),
-        hour(duration_hh_mm_ss) >= 1 ) 
+#|
+individual <- zoom_events |>
+  filter(str_detect(topic, "Sunday Gatherings"), hour(duration_hh_mm_ss) >= 1)
 
-individual |> 
-  filter(participants < 55) |> 
+individual |>
+  filter(participants < 55) |>
   ggplot(aes(month, participants)) +
-   geom_vline(xintercept = date("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
-  geom_smooth(method= "lm", se= FALSE, color = "grey80") +
+  geom_vline(
+    xintercept = date("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
+  geom_smooth(method = "lm", se = FALSE, color = "grey80") +
   geom_point(size = 3) +
-  geom_point(data = individual |> filter(participants > 55),
-             aes(month, participants), size = 3) +
+  geom_point(
+    data = individual |> filter(participants > 55),
+    aes(month, participants),
+    size = 3
+  ) +
   scale_x_date(
     labels = custom_labels,
     breaks = date_breaks,
@@ -257,24 +344,34 @@ individual |>
     expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 100)) +
-  labs(title = "Participation in Sunday Gatherings",
-       subtitle = "Half of 2024 through August of 2025",
-       caption = "Mamo chants drew many people in February 2024",
-       x = NULL,
-       y = NULL) +
+  labs(
+    title = "Participation in Sunday Gatherings",
+    subtitle = "Half of 2024 through August of 2025",
+    caption = "Mamo chants drew many people in February 2024",
+    x = NULL,
+    y = NULL
+  ) +
   ourmirror::mirror_theme()
 ```
 
 ```{r}
 #| out.width: "100%"
-individual <- zoom_events |> 
-  filter(str_detect(host, "Tara"), str_detect(topic, "Forum"),
-        hour(duration_hh_mm_ss) >= 1 ) 
+individual <- zoom_events |>
+  filter(
+    str_detect(host, "Tara"),
+    str_detect(topic, "Forum"),
+    hour(duration_hh_mm_ss) >= 1
+  )
 
-individual |> 
-  ggplot(aes(month, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
-  geom_smooth(method= "lm", se= FALSE, color = "grey80") +
+individual |>
+  ggplot(aes(month, participants)) +
+  geom_vline(
+    xintercept = date("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
+  geom_smooth(method = "lm", se = FALSE, color = "grey80") +
   geom_point(size = 3) +
   # geom_text_repel(aes(label = meeting_number)) +
   scale_x_date(
@@ -284,25 +381,38 @@ individual |>
     expand = c(0.02, 0.02)
   ) +
   scale_y_continuous(limits = c(0, 125)) +
-  labs(title = "Leadership Forums",
-       subtitle = "Half of 2024 through August of 2025",
-       x = NULL,
-       y = NULL) +
+  labs(
+    title = "Leadership Forums",
+    subtitle = "Half of 2024 through August of 2025",
+    x = NULL,
+    y = NULL
+  ) +
   ourmirror::mirror_theme()
 ```
 
 ```{r}
 #| out.width: "100%"
-individual <- zoom_events |> 
-  filter(str_detect(host, "Jeff"), str_detect(topic, "Leader"),
-         participants > 1 ) |> 
-  mutate(month = floor_date(month, "month")) |> 
+individual <- zoom_events |>
+  filter(
+    str_detect(host, "Jeff"),
+    str_detect(topic, "Leader"),
+    participants > 1
+  ) |>
+  mutate(month = floor_date(month, "month")) |>
   summarise(
-    participants = sum(participants), .by = month)
+    participants = sum(participants),
+    .by = month
+  )
 
-individual |> ggplot(aes(month, participants)) +   geom_vline(xintercept = date("2025-01-01"), 
-              color = "yellow", alpha = .5, linewidth = 2) +
-  geom_smooth(method = "lm", se= FALSE, color = "grey80") +
+individual |>
+  ggplot(aes(month, participants)) +
+  geom_vline(
+    xintercept = date("2025-01-01"),
+    color = "yellow",
+    alpha = .5,
+    linewidth = 2
+  ) +
+  geom_smooth(method = "lm", se = FALSE, color = "grey80") +
   geom_point(size = 3) +
   # geom_text_repel(aes(label = meeting_number)) +
   scale_x_date(
@@ -311,12 +421,14 @@ individual |> ggplot(aes(month, participants)) +   geom_vline(xintercept = date(
     limits = c(min_date, max_date),
     expand = c(0.02, 0.02)
   ) +
-  scale_y_continuous(limits = c(0,100)) +
-  labs(title = "P&E Leadership Calls",
-       subtitle = "Half of 2024 through August of 2025",
-       caption = "Three or four P&E calls at different times are offered each quarter.\nHere the number of participants are added up.",
-       x = NULL,
-       y = NULL) +
+  scale_y_continuous(limits = c(0, 100)) +
+  labs(
+    title = "P&E Leadership Calls",
+    subtitle = "Half of 2024 through August of 2025",
+    caption = "Three or four P&E calls at different times are offered each quarter.\nHere the number of participants are added up.",
+    x = NULL,
+    y = NULL
+  ) +
   ourmirror::mirror_theme()
 ```
 
