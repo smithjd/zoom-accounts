@@ -1,0 +1,398 @@
+
+---
+title: "Shambhala Online Zoom Meeting Analysis"
+subtitle: "Participation Patterns and Community Engagement (June 2024 - September 2025)"
+author: "John and the Posit Databot"
+date: "`r Sys.Date()`"
+fontsize: 11pt
+file: "jds:zoom-accounts/shambhala_zoom_analysis.qmd"
+format:
+  sgs-report-typst
+<!-- format: 
+  html:
+    toc: true
+    toc-depth: 3
+    code-fold: true
+    theme: cosmo
+execute:
+  warning: false
+  message: false -->
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  echo = FALSE,
+  message = FALSE,
+  error = FALSE,
+  warning = FALSE
+)
+library(tidyverse)
+library(patchwork)
+library(here)
+library(gt)
+
+# Display basic structure
+zoom_events <- read_rds(here("data", "zoom_events.rds"))
+```
+
+
+## Introduction
+
+This report analyzes Zoom meeting data from Shambhala Online, a Buddhist meditation and spiritual organization. The dataset contains detailed information about `{r} nrow(zoom_events)` meetings held over a 16-month period from June 2024 to September 2025. Our analysis explores participation patterns, timing preferences, and community engagement across different types of meetings.
+
+# Key metrics
+
+ - **Total meetings:** `{r} nrow(zoom_events)`
+ - **Date range:** `{r} format(min(zoom_events$start_time), "%B %d, %Y")` to 
+  `{r} format(max(zoom_events$start_time), "%B %d, %Y")`
+ - **Total participants across all meetings:** `{r} sum(zoom_events$participants)`
+ - **Average participants per meeting:** `{r} round(mean(zoom_events$participants), 1)`
+
+# Summary statistics for key variables
+
+```{r summary}
+summary(zoom_events |> select(participants, duration_hh_mm_ss, start_time))
+```
+
+### Missing Data
+
+```{r missing-data}
+missing_summary <- zoom_events |>
+  summarise(across(everything(), ~ sum(is.na(.)))) |>
+  pivot_longer(
+    everything(),
+    names_to = "column",
+    values_to = "missing_count"
+  ) |>
+  filter(missing_count > 0) |>
+  arrange(desc(missing_count))
+
+missing_summary
+```
+
+Notable missing data includes `{r} missing_summary$missing_count[missing_summary$column == "department"]` missing department values and `{r} missing_summary$missing_count[missing_summary$column == "group"]` missing group values.
+
+## Largest Meetings and Most Popular Topics
+
+### Top 10 Largest Meetings by Attendance
+
+```{r largest-meetings}
+
+zoom_events |>
+  arrange(desc(participants)) |>
+  select(topic, start_time, participants, duration_hh_mm_ss, host) |>
+  head(10) |>
+  gt() |>
+  tab_header(title = "Ten Largest Zoom Meetings by Participant Count")
+```
+
+The largest meeting was **The Funeral Ceremony of Lady Diana Judith Mukpo** with `{r} max(zoom_events$participants)` participants on September 17, 2025, demonstrating the community's ability to gather for significant ceremonial events.
+
+### Most Frequent Meeting Topics
+
+```{r popular-topics}
+topic_summary <- zoom_events |>
+  group_by(topic) |>
+  summarise(
+    num_meetings = n(),
+    total_participants = sum(participants),
+    avg_participants = mean(participants),
+    max_participants = max(participants)
+  ) |>
+  arrange(desc(num_meetings)) |>
+  head(15)
+
+topic_summary |>
+  gt() |>
+  tab_header(title = "Top 15 Most Frequent Meeting Topics")
+```
+
+```{r popular-topics-plot, fig.width=10, fig.height=6}
+topic_summary |>
+  head(10) |>
+  ggplot(aes(x = reorder(topic, num_meetings), y = num_meetings)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Top 10 Most Frequent Zoom Meeting Topics",
+    subtitle = "Shambhala Online (June 2024 - Sept 2025)",
+    x = NULL,
+    y = "Number of Meetings"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+**Compassion for Ukraine - Daily Tonglen** is by far the most frequent meeting with `{r} topic_summary$num_meetings[1]` sessions, representing a dedicated daily practice for peace.
+
+## Daily Tonglen Practice Analysis
+
+The Compassion for Ukraine - Daily Tonglen sessions represent an extraordinary example of community dedication and consistency.
+
+### Timing Patterns
+
+```{r tonglen-prep}
+tonglen <- zoom_events |>
+  filter(topic == "Compassion for Ukraine - Daily Tonglen")
+
+tonglen_clean <- tonglen |>
+  mutate(
+    hour = hour(start_time),
+    weekday = wday(start_time, label = TRUE, week_start = 1),
+    duration_minutes = as.numeric(duration_hh_mm_ss) / 60,
+    date = as.Date(start_time)
+  ) |>
+  filter(duration_minutes > 10) # Filter out test sessions
+
+tonglen_stats <- tonglen_clean |>
+  summarise(
+    total_sessions = n(),
+    avg_participants = mean(participants),
+    median_participants = median(participants),
+    max_participants = max(participants),
+    avg_duration_min = mean(duration_minutes),
+    days_covered = n_distinct(date),
+    date_range = as.numeric(max(date) - min(date) + 1),
+    coverage_pct = (days_covered / date_range) * 100
+  )
+```
+
+#### Key Statistics
+
+- **Total sessions:** `{r} tonglen_stats$total_sessions`
+- **Daily coverage:** `{r} round(tonglen_stats$coverage_pct, 1)`% (sessions on `{r} tonglen_stats$days_covered` of `{r} tonglen_stats$date_range` days)
+- **Average participants:** `{r} round(tonglen_stats$avg_participants, 1)`
+- **Average duration:** `{r} round(tonglen_stats$avg_duration_min, 1)` minutes
+
+```{r tonglen-hour-plot, fig.width=10, fig.height=5}
+tonglen_clean |>
+  count(hour) |>
+  ggplot(aes(x = hour, y = n)) +
+  geom_col(fill = "steelblue") +
+  scale_x_continuous(breaks = seq(0, 23, 2)) +
+  labs(
+    title = "Tonglen Sessions by Hour of Day",
+    subtitle = "Most sessions occur at 7-8 AM",
+    x = "Hour of Day (24-hour format)",
+    y = "Number of Sessions"
+  ) +
+  theme_minimal()
+```
+
+The overwhelming majority (`{r} round(sum(tonglen_clean$hour >= 7 & tonglen_clean$hour < 9) / nrow(tonglen_clean) * 100, 1)`%) of sessions occur between 7-8 AM, establishing this as the primary community practice time.
+
+```{r tonglen-weekday-plot, fig.width=8, fig.height=5}
+tonglen_clean |>
+  count(weekday) |>
+  ggplot(aes(x = weekday, y = n)) +
+  geom_col(fill = "darkgreen") +
+  labs(
+    title = "Tonglen Sessions by Day of Week",
+    subtitle = "Consistent practice across all days",
+    x = NULL,
+    y = "Number of Sessions"
+  ) +
+  theme_minimal()
+```
+
+```{r tonglen-timeline-plot, fig.width=10, fig.height=5}
+tonglen_clean |>
+  group_by(date) |>
+  summarise(
+    num_sessions = n(),
+    total_participants = sum(participants)
+  ) |>
+  ggplot(aes(x = date, y = total_participants)) +
+  geom_line(color = "steelblue", alpha = 0.6) +
+  geom_smooth(se = FALSE, color = "darkred") +
+  labs(
+    title = "Daily Tonglen Participation Over Time",
+    subtitle = "June 2024 - September 2025",
+    x = NULL,
+    y = "Total Participants per Day"
+  ) +
+  theme_minimal()
+```
+
+### Morning vs Afternoon Sessions
+
+```{r morning-afternoon-prep}
+tonglen_by_time <- tonglen_clean |>
+  mutate(
+    time_of_day = case_when(
+      hour >= 5 & hour < 12 ~ "Morning (5am-12pm)",
+      hour >= 12 & hour < 17 ~ "Afternoon (12pm-5pm)",
+      hour >= 17 & hour < 21 ~ "Evening (5pm-9pm)",
+      TRUE ~ "Night (9pm-5am)"
+    )
+  )
+
+time_comparison <- tonglen_by_time |>
+  group_by(time_of_day) |>
+  summarise(
+    num_sessions = n(),
+    avg_participants = mean(participants),
+    median_participants = median(participants),
+    total_participants = sum(participants),
+    max_participants = max(participants)
+  ) |>
+  arrange(desc(num_sessions))
+
+time_comparison |>
+  gt() |>
+  tab_header(title = "Tonglen Sessions by Time of Day")
+```
+
+```{r morning-afternoon-plot, fig.width=10, fig.height=5}
+morning_afternoon <- tonglen_by_time |>
+  filter(time_of_day %in% c("Morning (5am-12pm)", "Afternoon (12pm-5pm)")) |>
+  mutate(time_period = ifelse(hour < 12, "Morning", "Afternoon"))
+
+morning_afternoon |>
+  ggplot(aes(x = time_period, y = participants, fill = time_period)) +
+  geom_boxplot(alpha = 0.7) +
+  scale_y_log10() +
+  scale_fill_manual(values = c("Morning" = "gold", "Afternoon" = "steelblue")) +
+  labs(
+    title = "Tonglen Session Participation: Morning vs Afternoon",
+    subtitle = "Log scale - Morning sessions have dramatically higher participation",
+    x = NULL,
+    y = "Number of Participants (log scale)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+```
+
+```{r morning-afternoon-comparison, fig.width=10, fig.height=8}
+comparison_summary <- morning_afternoon |>
+  group_by(time_period) |>
+  summarise(
+    total_sessions = n(),
+    avg_participants = mean(participants),
+    total_participants = sum(participants)
+  )
+
+p2_log <- ggplot(
+  comparison_summary,
+  aes(x = time_period, y = total_sessions, fill = time_period)
+) +
+  geom_col(alpha = 0.8) +
+  geom_text(aes(label = total_sessions), vjust = -0.5, size = 5) +
+  scale_y_log10(breaks = c(1, 10, 100, 500)) +
+  scale_fill_manual(values = c("Morning" = "gold", "Afternoon" = "steelblue")) +
+  labs(
+    title = "Number of Sessions (log scale)",
+    x = NULL,
+    y = "Count (log scale)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p3_log <- ggplot(
+  comparison_summary,
+  aes(x = time_period, y = avg_participants, fill = time_period)
+) +
+  geom_col(alpha = 0.8) +
+  geom_text(aes(label = round(avg_participants, 1)), vjust = -0.5, size = 5) +
+  scale_y_log10(breaks = c(1, 2, 5, 10, 15)) +
+  scale_fill_manual(values = c("Morning" = "gold", "Afternoon" = "steelblue")) +
+  labs(
+    title = "Average Participants per Session (log scale)",
+    x = NULL,
+    y = "Participants (log scale)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+p2_log +
+  p3_log +
+  plot_annotation(
+    title = "Morning vs Afternoon Tonglen Sessions Comparison",
+    subtitle = "Log scale - Shows the magnitude of difference more clearly"
+  )
+```
+
+Morning sessions occur **`{r} round(comparison_summary$total_sessions[comparison_summary$time_period == "Morning"] / comparison_summary$total_sessions[comparison_summary$time_period == "Afternoon"], 1)` times more frequently** than afternoon sessions and have **`{r} round(comparison_summary$avg_participants[comparison_summary$time_period == "Morning"] / comparison_summary$avg_participants[comparison_summary$time_period == "Afternoon"], 1)` times more participants** on average.
+
+## Regular Meeting Patterns
+
+### Analysis of Other Regular Topics
+
+```{r regular-meetings}
+regular_topics <- zoom_events |>
+  filter(topic != "Compassion for Ukraine - Daily Tonglen") |>
+  group_by(topic) |>
+  summarise(
+    num_meetings = n(),
+    total_participants = sum(participants),
+    avg_participants = mean(participants),
+    median_participants = median(participants),
+    sd_participants = sd(participants),
+    max_participants = max(participants)
+  ) |>
+  filter(num_meetings >= 50) |>
+  arrange(desc(num_meetings))
+
+regular_topics |>
+  head(15) |>
+  gt() |>
+  tab_header(title = "Regular Meeting Topics (50+ sessions)")
+```
+
+```{r regular-meetings-plot, fig.width=10, fig.height=6}
+top_10_regular <- regular_topics |> head(10)
+
+ggplot(
+  top_10_regular,
+  aes(x = reorder(topic, avg_participants), y = avg_participants)
+) +
+  geom_point(aes(size = num_meetings), color = "steelblue", alpha = 0.7) +
+  geom_errorbar(
+    aes(
+      ymin = avg_participants - sd_participants / 2,
+      ymax = avg_participants + sd_participants / 2
+    ),
+    width = 0.2,
+    alpha = 0.5
+  ) +
+  coord_flip() +
+  labs(
+    title = "Average Participation in Regular Meetings",
+    subtitle = "Point size shows number of meetings; error bars show variability",
+    x = NULL,
+    y = "Average Participants per Session",
+    size = "Number of\nMeetings"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+### Meeting Types
+
+```{r meeting-types}
+meeting_analysis <- zoom_events |>
+  filter(topic %in% regular_topics$topic) |>
+  mutate(
+    meeting_type = case_when(
+      str_detect(topic, "Personal Meeting Room") ~ "Personal Rooms",
+      str_detect(topic, "Sunday Gatherings") ~ "Sunday Gatherings",
+      str_detect(topic, "Meditation") ~ "Meditation Groups",
+      str_detect(topic, "Training|Council|Board") ~ "Admin/Training",
+      str_detect(topic, "Funeral") ~ "Special Events",
+      TRUE ~ "Other Regular"
+    ),
+    duration_minutes = as.numeric(duration_hh_mm_ss) / 60
+  )
+
+meeting_analysis |>
+  group_by(meeting_type) |>
+  summarise(
+    num_meetings = n(),
+    avg_participants = mean(participants),
+    median_participants = median(participants),
+    total_participants = sum(participants),
+    avg_duration_min = mean(duration_minutes, na.rm = TRUE)
+  ) |>
+  gt() |>
+  tab_header(title = "Meeting Type statistics")
+```  

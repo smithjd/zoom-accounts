@@ -8,10 +8,10 @@
 # API playground: https://developer.zoom.us/playground/
 #
 # The gmail authorization can be downloaded here: https://console.cloud.google.com/apis/credentials?project=so-emails
-# 
+#
 # Get history of one individual
 #
-# Check out recordings with this API end point: https://marketplace.zoom.us/docs/api-reference/zoom-api/cloud-recording/recordingslist 
+# Check out recordings with this API end point: https://marketplace.zoom.us/docs/api-reference/zoom-api/cloud-recording/recordingslist
 
 # Parameters:
 
@@ -20,7 +20,6 @@ account_email <- "cynthiamackay@mac.com"
 month_start <- "2019-01-01"
 month_end <- "2019-02-01"
 # month_end <- "2019-12-31"
-
 
 # Libraries
 source("~/Rfunctions/setup_my_google.R")
@@ -31,7 +30,7 @@ library(jose)
 suppressPackageStartupMessages(library(jsonlite))
 library(curl)
 library(RCurl)
-library(googlesheets)
+library(googlesheets4)
 library(here)
 library(httpuv)
 
@@ -57,18 +56,26 @@ get_past_meetings <- function(month, email_id) {
 
   from_date <- as.Date.character(rollback(as.Date(month), roll_to_first = TRUE))
   to_date <- as.Date.character(ceiling_date(as.Date(month), "month") - 1)
-  
+
   paste0(
     "https://api.zoom.us/v2/report/users/",
-    email_id, "/meetings?from=", from_date, "&to=", to_date,
+    email_id,
+    "/meetings?from=",
+    from_date,
+    "&to=",
+    to_date,
     "&page_size=60&page_number=1&access_token=",
     jwt
   )
-  
+
   response <- curl_fetch_memory(
     paste0(
       "https://api.zoom.us/v2/report/users/",
-      email_id, "/meetings?from=", from_date, "&to=", to_date,
+      email_id,
+      "/meetings?from=",
+      from_date,
+      "&to=",
+      to_date,
       "&page_size=60&page_number=1&access_token=",
       jwt
     )
@@ -85,7 +92,7 @@ get_past_meetings <- function(month, email_id) {
 
 date_list <- seq.Date(as.Date(month_start), as.Date(month_end), by = "month")
 
-past_meetings <- date_list %>%  map(~get_past_meetings(.x, account_email))
+past_meetings <- date_list %>% map(~ get_past_meetings(.x, account_email))
 
 past_meetings <- bind_rows(past_meetings)
 # replace object with a very different one of the same name
@@ -97,13 +104,19 @@ past_meetings <- past_meetings %>%
     type = meeting_type_lookup[type],
     weekday = wday(start_time, label = TRUE, abbr = TRUE)
   ) %>%
-  select(start_time, end_time, weekday, topic, host_email,
-         duration, participants_count) %>%
+  select(
+    start_time,
+    end_time,
+    weekday,
+    topic,
+    host_email,
+    duration,
+    participants_count
+  ) %>%
   arrange(start_time)
 
 str(past_meetings)
 # past_meetings
 
-
 # write_rds(zoom_user_list, here("data", "zoom_user_list.Rds"))
-# write_rds(past_meetings, here("data", "past_meetings.Rds"))
+write_rds(past_meetings, here("data", "past_meetings.Rds"))
