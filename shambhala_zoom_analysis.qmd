@@ -74,6 +74,26 @@ Notable missing data includes `{r} missing_summary$missing_count[missing_summary
 
 ## Largest Meetings and Most Popular Topics
 
+### Shambhala Online Account Activity
+
+```{r}
+zoom_events |>
+  filter(str_detect(host, "Room")) |>
+  select(topic, start_time, participants, duration_hh_mm_ss, host) |>
+  count(host, name = "num_meetings") |>
+  ggplot(aes(x = reorder(host, num_meetings), y = num_meetings)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(
+    title = "Shambhala Online Account Activity",
+    subtitle = "Shambhala Online (June 2024 - Sept 2025)",
+    x = NULL,
+    y = "Number of Meetings"
+  ) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
 ### Top 10 Largest Meetings by Attendance
 
 ```{r largest-meetings}
@@ -202,6 +222,7 @@ tonglen_clean |>
     num_sessions = n(),
     total_participants = sum(participants)
   ) |>
+  filter(total_participants < 100) |>
   ggplot(aes(x = date, y = total_participants)) +
   geom_line(color = "steelblue", alpha = 0.6) +
   geom_smooth(se = FALSE, color = "darkred") +
