@@ -20,6 +20,7 @@ library(janitor)
 library(scales)
 library(ggrepel)
 library(ourmirror)
+library(gt)
 
 # recent charges
 
@@ -55,9 +56,32 @@ ZOOM has become an everyday feature of life in Shambhala. We are usually only aw
 
 Recently, detailed records of each meeting or event held on Zoom since June 2024 have become available. Those records detail the meeting's host, the number of participants, the event date, whether it was recorded, and its duration. All of this data can be summarized by month to get a sense of the level of activity and trends over time.
 
+## Big Events in Shambhala
+
+Although only one fourth of the events using Shambhala Zoom accounts have more than 5 participants, Zoom hosts some events that draw more than the 300 limit that applies to our standard accounts.
+```{r}
+zoom_events |>
+  filter(participants > 300) |>
+  arrange(start_time) |>
+  select(topic, participants, start_time) |>
+  mutate(start_time = as_date(start_time)) |>
+  gt() |>
+  tab_header(
+    title = "Events with more than 300 participants",
+    subtitle = paste("Since", min_date)
+  ) |>
+  cols_label(
+    start_time = "Date",
+    participants = "Participants",
+    topic = "Title"
+  )
+```
+
 ```{=typst}
 #pagebreak()
+#v(2em)
 ```
+
 ## Daytime for Shambhala
 
 Here are the busy-times for Shambhala:
@@ -87,7 +111,7 @@ ggplot(zoom_heatmap_data, aes(x = hour, y = day_of_week, fill = n)) +
   labs(
     title = "Shambhala's Zoom Events",
     subtitle = paste(
-      "Total number of events between ",
+      "All events between ",
       month(min_date, label = TRUE),
       year(min_date),
       "and",
@@ -99,7 +123,7 @@ ggplot(zoom_heatmap_data, aes(x = hour, y = day_of_week, fill = n)) +
   ) +
   theme_minimal() +
   facet_wrap(~group, ncol = 1) +
-  ourmirror::mirror_theme(base_size = 13) +
+  ourmirror::mirror_theme(base_size = 12) +
   theme(
     panel.grid.major.y = element_blank(),
     axis.text.x = element_text(angle = 0, hjust = 0.5)
@@ -440,3 +464,68 @@ individual |>
 ```
 
 There are many other regular events, such as staff meetings, that are core activities but are not regularly recorded.
+
+```{=typst}
+#pagebreak()
+```
+## Daily Tonglen Practice
+
+The Compassion for Ukraine - Daily Tonglen sessions represent an extraordinary example of community dedication and consistency.
+
+### Timing Patterns
+
+```{r tonglen-prep}
+tonglen <- zoom_events |>
+  filter(topic == "Compassion for Ukraine - Daily Tonglen")
+
+tonglen_clean <- tonglen |>
+  mutate(
+    hour = hour(start_time),
+    weekday = wday(start_time, label = TRUE, week_start = 1),
+    duration_minutes = as.numeric(duration_hh_mm_ss) / 60,
+    date = as.Date(start_time)
+  ) |>
+  filter(duration_minutes > 10) # Filter out test sessions
+
+tonglen_stats <- tonglen_clean |>
+  summarise(
+    total_sessions = n(),
+    avg_participants = mean(participants),
+    median_participants = median(participants),
+    max_participants = max(participants),
+    avg_duration_min = mean(duration_minutes),
+    days_covered = n_distinct(date),
+    date_range = as.numeric(max(date) - min(date) + 1),
+    coverage_pct = (days_covered / date_range) * 100
+  )
+```
+
+#### Key Statistics
+
+- **Total sessions:** `{r} tonglen_stats$total_sessions`
+- **Daily coverage:** `{r} round(tonglen_stats$coverage_pct, 1)`% (sessions on `{r} tonglen_stats$days_covered` of `{r} tonglen_stats$date_range` days)
+- **Average participants:** `{r} round(tonglen_stats$avg_participants, 1)`
+- **Average duration:** `{r} round(tonglen_stats$avg_duration_min, 1)` minutes
+
+
+
+```{r tonglen-timeline-plot, fig.width=10, fig.height=5}
+tonglen_clean |>
+  group_by(date) |>
+  summarise(
+    num_sessions = n(),
+    total_participants = sum(participants)
+  ) |>
+  filter(total_participants < 100) |>
+  ggplot(aes(x = date, y = total_participants)) +
+  geom_line(color = "steelblue", alpha = 0.6) +
+  geom_smooth(se = FALSE, color = "darkred") +
+  scale_y_continuous(limits = c(0, 60)) +
+  labs(
+    title = "Daily Tonglen Participation Over Time",
+    subtitle = "June 2024 - September 2025",
+    x = NULL,
+    y = NULL
+  ) +
+  mirror_theme()
+```
