@@ -4,6 +4,7 @@ library(httr2)
 library(jsonlite)
 library(lubridate)
 library(dplyr)
+library(tidyverse)
 
 # Function to get Zoom API token (you'll need to implement this based on your auth method)
 
@@ -32,24 +33,41 @@ get_zoom_token <- function(client_id, client_secret) {
   return(token_data$access_token)
 }
 
-
-# Function to get all users
 get_zoom_users <- function(token) {
-  response <- request("https://api.zoom.us/v2/users") %>%
-    req_headers(Authorization = paste("Bearer", token)) %>%
-    req_url_path_append(user_id) %>%
-    req_headers(Authorization = paste("Bearer", token)) %>%
-    # req_params(
-    #   from = start_date,
-    #   to = end_date,
-    #   page_size = 300  # Adjust as needed
-    # ) %>%
-    req_perform()
+  all_users <- list()
+  next_page_token <- NULL
 
-  users <- response %>% resp_body_json()
-  return(users$users)
+  repeat {
+    # Build the request
+    req <- request("https://api.zoom.us/v2/users") |>
+      req_headers(Authorization = paste("Bearer", token)) |>
+      req_url_query(page_size = 300) # Max page size is 300
+
+    # Add page token if we have one
+    if (!is.null(next_page_token)) {
+      req <- req |> req_url_query(next_page_token = next_page_token)
+    }
+
+    # Perform request
+    response <- req |> req_perform()
+    result <- response |> resp_body_json()
+
+    # Append users from this page
+    all_users <- c(all_users, result$users)
+
+    # Check if there are more pages
+    next_page_token <- result$next_page_token
+    if (is.null(next_page_token) || next_page_token == "") {
+      break
+    }
+  }
+
+  return(all_users)
 }
 
+token <- get_zoom_token(client_id, client_secret)
+
+# Then call get_zoom_users with the token
 users <- get_zoom_users(token)
 
 users <- tibble(
