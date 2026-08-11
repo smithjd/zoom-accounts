@@ -1,7 +1,7 @@
 ---
 title: Using SGS ZOOM accounts
 date: September 8, 2025
-file: "jds: zoom-accounts/individual-group-use.qmd"
+file: "jds: zoom-accounts/individual-group-use"
 fontsize: 11pt
 format:
   sgs-report-typst
@@ -50,13 +50,13 @@ custom_labels <- ifelse(
 )
 ```
 
-## Background
+# Background
 
 ZOOM has become an everyday feature of life in Shambhala. We are usually only aware of our own individual uses, not how Zoom is used more broadly. In SGS Zoom is used to offer classes, to host small- and large-scale gatherings, and for administrative functions of all kinds. SGS Zoom accounts are used by SGS staff, Shambhala Online, the Shambhala Board, and other groups such as the Code of Conduct officers and the Global Community Council. We have an educational license, which makes Zoom affordable.
 
 Recently, detailed records of each meeting or event held on Zoom since June 2024 have become available. Those records detail the meeting's host, the number of participants, the event date, whether it was recorded, and its duration. All of this data can be summarized by month to get a sense of the level of activity and trends over time.
 
-## Big Events in Shambhala
+# Big Events in Shambhala
 
 Although only one fourth of the events using Shambhala Zoom accounts have more than 5 participants, Zoom hosts some events that draw more than the 300 limit that applies to our standard accounts.
 ```{r}
