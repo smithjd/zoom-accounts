@@ -6,6 +6,9 @@
     },
     "edit": {
       "*.qmd": "allow"
+    },
+    "executeCode": {
+      "*": "allow"
     }
   }
 }

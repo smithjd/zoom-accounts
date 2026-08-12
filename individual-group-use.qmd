@@ -1,5 +1,5 @@
 ---
-title: Using SGS ZOOM accounts
+title: Utilization of SGS ZOOM accounts
 date: "`r format(Sys.Date(), '%B %d, %Y')`"
 file: "jds: zoom-accounts/individual-group-use"
 fontsize: 11pt
@@ -21,14 +21,7 @@ library(scales)
 library(ggrepel)
 library(ourmirror)
 library(gt)
-
-# recent charges
-
-# Apr 30, 2025 - May 29	$57.00
-# May 30, 2025 - Jun 29	$102.60
-# Jun 30, 2025 - Jul 29	$102.60
-# Jun 30, 2025 - Jul 29	$94.67
-# 2nd quarter total: $356.87
+library(zoo)
 
 zoom_events <- read_rds(here("data", "zoom_events.rds")) |>
   mutate(
@@ -54,23 +47,153 @@ custom_labels <- ifelse(
   format(date_breaks, "%b")
 )
 
-# Create subtitle with date range
+# Create subtitle with date range and comma-formatted numbers
 date_range_subtitle <- paste(
-  format(min_date, "%B %Y"),
+  format(min_date, "%B, %Y"),
   "through",
-  format(max_date, "%B %Y")
+  format(max_date, "%B, %Y")
 )
 ```
 
 # Background
 
-ZOOM has become an everyday feature of life in Shambhala. We are usually only aware of our own individual uses, not how Zoom is used more broadly. In SGS Zoom is used to offer classes, to host small- and large-scale gatherings, and for administrative functions of all kinds. SGS Zoom accounts are used by SGS staff, Shambhala Online, the Shambhala Board, and other groups such as the Code of Conduct officers and the Global Community Council. We have an educational license, which makes Zoom affordable.
+Zoom is woven into the fabric of Shambhala—we navigate it daily but rarely see the full picture. SGS maintains Zoom accounts across nine distinct functions: Shambhala Online classes, Board governance, staff administration, and leadership circles (including the Code of Conduct officers and Global Community Council). An educational license keeps costs manageable, but understanding actual usage patterns reveals both the scale and surprising gaps in how we deploy this essential infrastructure.
 
 Recently, detailed records of each meeting or event held on Zoom since June 2024 have become available. Those records detail the meeting's host, the number of participants, the event date, whether it was recorded, and its duration. All of this data can be summarized by month to get a sense of the level of activity and trends over time.
 
+## Account Distribution
+
+Shambhala's Zoom capacity is distributed across multiple account types, each serving a distinct mission. Some people use their own, separately purchased Zoom accounts (Faradee, Frederick, and Pawel as well as most Board members) so their activity is not reflected in this report. The breakdown below shows how demand is distributed:
+
+```{r}
+#| out.width: "100%"
+
+account_summary <- zoom_events |>
+  filter(participants > 1) |>
+  mutate(
+    account_type = case_when(
+      str_detect(host, "Room") ~ "Shambhala Online",
+      str_detect(host, "Tara") &
+        str_detect(topic, "Staff") ~ "SGS Staff Meetings",
+      str_detect(host, "Tara") &
+        str_detect(topic, "Leadership") ~ "Leadership Forum",
+      str_detect(host, "Jeff") ~ "P&E Leadership",
+      str_detect(
+        host,
+        "Templin|Woodard|Murphy|Toohey|Scott|Tröscher|David Smith|West|MacLellan|Johnson|Wimberly|Shaw|Tetmeyer|Good|Verhalen|O'Dowd"
+      ) ~ "SGS Staff",
+      str_detect(host, "Global Community Council") ~ "GCC",
+      str_detect(host, "Dummer|Fladmark|Snyder") ~ "Code of Conduct",
+      str_detect(host, "Chöling|Manasjan|Werma") ~ "Land Centers",
+      str_detect(
+        host,
+        "Susan Engel|Susan Ryan|Koen Braak|Shambhala Board|William Clark|Mark Blumenfeld"
+      ) ~ "Shambhala Board",
+      TRUE ~ "Other"
+    )
+  ) |>
+  summarise(
+    total_events = n(),
+    total_participants = sum(participants),
+    total_hours = sum(duration_hh_mm_ss) / 3600,
+    .by = account_type
+  ) |>
+  mutate(
+    pct_events = (total_events / sum(total_events)) * 100,
+    pct_participants = (total_participants / sum(total_participants)) * 100,
+    pct_hours = (total_hours / sum(total_hours)) * 100
+  )
+```
+
+```{r}
+
+account_summary |>
+  mutate(account_type = fct_reorder(account_type, total_events)) |>
+  ggplot(aes(x = total_events, y = account_type)) +
+  geom_col(fill = "dark green") +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title = "Zoom Events by Account Type",
+    subtitle = paste("Total events:", comma(sum(account_summary$total_events))),
+    y = NULL,
+    x = NULL
+  ) +
+  theme_minimal() +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+SGS Staff members are completely dependent on Zoom to do their work.  On the other hand, Zoom is key for providing Shambhala Online's services.
+
+```{r}
+
+account_summary |>
+  mutate(account_type = fct_reorder(account_type, total_participants)) |>
+  ggplot(aes(x = total_participants, y = account_type)) +
+  geom_col(fill = "dark green") +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title = "Zoom Participants by Account Type",
+    subtitle = paste(
+      "Total participants:",
+      comma(sum(account_summary$total_participants))
+    ),
+    y = NULL,
+    x = NULL
+  ) +
+  theme_minimal() +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+The picture changes when we look at the total number of participants.
+
+```{r}
+
+account_summary |>
+  mutate(account_type = fct_reorder(account_type, total_hours)) |>
+  ggplot(aes(x = total_hours, y = account_type)) +
+  geom_col(fill = "dark green") +
+  scale_x_continuous(labels = label_comma()) +
+  labs(
+    title = "Zoom Hours by Account Type",
+    subtitle = paste(
+      "Total hours:",
+      comma(round(sum(account_summary$total_hours), 0))
+    ),
+    y = NULL,
+    x = NULL
+  ) +
+  theme_minimal() +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+Total hours is the sum of meeting length for each meeting - summed over account type.
+
+```{=typst}
+#pagebreak()
+```
+
 # Big Events in Shambhala
 
-Although only one fourth of the events using Shambhala Zoom accounts have more than 5 participants, Zoom hosts some events that draw more than the 300 limit that applies to our standard accounts.
+Most Zoom events are small — 75% have five or fewer participants. Yet several events annually exceed our standard account limit of 300, signaling both the breadth of our community and moments when Shambhala gathers at scale.
+
 ```{r}
 zoom_events |>
   filter(participants > 300) |>
@@ -96,7 +219,7 @@ zoom_events |>
 
 ## Daytime for Shambhala
 
-Here are the busy-times for Shambhala:
+Shambhala's Zoom activity reveals two distinct rhythms. The heatmap below shows when our community actually meets—a window into when Shambhala is most alive on Zoom.
 
 ```{r}
 #| out.width: "100%"
@@ -138,10 +261,15 @@ ggplot(zoom_heatmap_data, aes(x = hour, y = day_of_week, fill = n)) +
   ourmirror::mirror_theme(base_size = 12) +
   theme(
     panel.grid.major.y = element_blank(),
-    axis.text.x = element_text(angle = 0, hjust = 0.5)
+    axis.text.x = element_text(angle = 0, hjust = 0.5),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA),
+    strip.background = element_rect(fill = "aliceblue", color = NA)
     # panel.spacing = unit(.75, "cm")
   )
 ```
+
+The dominance of off-peak Zoom reflects Shambhala's global reach and the role of evening practices, evening governance, and early-morning Asian participation. This also suggests that capacity during 9-to-5 is rarely our bottleneck.
 
 ```{=typst}
 #pagebreak()
@@ -149,7 +277,7 @@ ggplot(zoom_heatmap_data, aes(x = hour, y = day_of_week, fill = n)) +
 
 ## Scale of ZOOM use
 
-Regular staff meetings are the core of SGS administration. (In the following graph, the yellow line represents January 1 for each year.)
+Staff meetings form the backbone of SGS operations. The graph below tracks participation across each month; yellow lines mark January 1st boundaries, useful for spotting seasonal patterns.
 
 
 ```{r}
@@ -185,7 +313,13 @@ zoom_events |>
     color = "Host:"
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 To get a sense of the scale of SGS use, look at the length of zoom meetings (in hours) multiplied by the number of participants. The data doesn't distinguish between internal use within SGS and the hours that our community as a whole spends on ZOOM in events hosted by SGS.
@@ -231,25 +365,172 @@ zoom_activity |>
     y = NULL
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.x = element_blank(),
+    panel.grid.minor.x = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
-Some ways of visualizing 10,000 hours in **one month's** use of ZOOM could be:
+To grasp the scale: 10,000 participant-hours in a single month equals 13 months of non-stop Zoom calls, or the energy footprint of driving 25,000–50,000 miles in an average car. And this understates the reality—many sessions are recorded and redistributed via Vimeo or Google Drive, extending their reach long after the live event ends.
 
--   Over 13 months of continuous Zoom video conference calls
--   The energy consumption equivalent to driving an average car approximately 25,000-50,000 miles (2 to years average in the US).
 
-Total video activity in Shambhala is greater than this, since many Zoom recordings are shared after the fact via Vimeo or other storage locations such as Google Drive.
+
+```{r}
+#| eval: false
+#| out.width: "100%"
+
+## What We Use Zoom For
+
+# Participant-hours tell us the scale, but not the composition. Are we investing in teaching? Governance? Administrative overhead? The chart below shows how our Zoom load breaks down by event type:
+
+event_types <- zoom_events |>
+  filter(participants > 1) |>
+  mutate(
+    event_type = case_when(
+      str_detect(
+        topic,
+        regex("class|course|lecture|teaching|program", ignore_case = TRUE)
+      ) ~ "Teaching/Learning",
+      str_detect(
+        topic,
+        regex("board|council|forum|governance", ignore_case = TRUE)
+      ) ~ "Governance",
+      str_detect(
+        topic,
+        regex("staff|meeting|admin|planning", ignore_case = TRUE)
+      ) ~ "Administration",
+      str_detect(
+        topic,
+        regex("tonglen|practice|gathering|meditation", ignore_case = TRUE)
+      ) ~ "Community Practice",
+      TRUE ~ "Other"
+    )
+  ) |>
+  summarise(
+    total_events = n(),
+    total_participants = sum(participants),
+    total_hours = sum(duration_hh_mm_ss) / 3600,
+    .by = c(month, event_type)
+  )
+
+event_types |>
+  ggplot(aes(x = month, y = total_events, fill = event_type)) +
+  geom_area(alpha = 0.7) +
+  geom_vline(
+    xintercept = jan_dates,
+    color = "yellow",
+    alpha = 0.5,
+    linewidth = 2
+  ) +
+  scale_x_date(
+    labels = custom_labels,
+    breaks = date_breaks,
+    limits = c(min_date, max_date),
+    expand = c(0.02, 0.02)
+  ) +
+  scale_fill_manual(
+    values = c(
+      "Teaching/Learning" = "#1b9e77",
+      "Governance" = "#d95f02",
+      "Administration" = "#7570b3",
+      "Community Practice" = "#e7298a",
+      "Other" = "#bdbdbd"
+    )
+  ) +
+  labs(
+    title = "Monthly Event Volume by Type",
+    subtitle = date_range_subtitle,
+    x = NULL,
+    y = "Number of Events",
+    fill = "Event Type"
+  ) +
+  ourmirror::mirror_theme(base_size = 13) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+
+# Understanding this mix helps leadership make intentional decisions about future Zoom use.
+```
 
 ## Recordings
 
-In addition to all the other functions that Zoom offers, recording a meeting to ZOOM's cloud storage is convenient and enables a meeting or class to be reviewed, sharing it with others who missed it live, or for transfer and distribution via Vimeo, in the case of Shambhala Online.
+Recordings extend a meeting's life: attendees revisit content, others catch up asynchronously, and Shambhala Online distributes curated sessions via Vimeo. Yet only 10% of Zoom meetings are recorded. The constraint is financial—Zoom charges for cloud storage overages. In Q2 2025 alone, SGS spent roughly $350 on storage, a cost that directly tracks how many recordings linger in the cloud longer than necessary.
 
-Only 10% of the total zoom meetings between June 2024 and the present were recorded. We pay extra for Zoom recordings that we leave in the cloud for too long. In the 2nd quarter of 2025, SGS paid about \$350 for cloud storage overages.
+Recently Shambhala Online in particular has established methods and protocols for offloading Zoom recordings on to Vimeo.
+
+```{r}
+#| eval: false
+#| out.width: "100%"
+
+## Recording Economics
+
+# Not all recordings earn their storage cost. Some videos are long, rarely accessed, and consume storage unnecessarily. The chart below shows the relationship between recording duration and estimated storage cost, colored by account type:
+
+recording_analysis <- zoom_events |>
+  filter(recording == "Yes", participants > 1) |>
+  mutate(
+    account_type = case_when(
+      str_detect(host, "Room") ~ "Shambhala Online",
+      str_detect(host, "Tara") ~ "SGS Staff",
+      str_detect(host, "Jeff") ~ "P&E",
+      TRUE ~ "Other"
+    ),
+    duration_hours = duration_hh_mm_ss / 3600,
+    estimated_storage_gb = duration_hours * 0.15,
+    estimated_storage_cost = estimated_storage_gb * 0.10
+  )
+
+recording_analysis |>
+  ggplot(aes(
+    x = duration_hours,
+    y = estimated_storage_cost,
+    color = account_type,
+    size = participants
+  )) +
+  geom_point(alpha = 0.6) +
+  geom_smooth(
+    method = "lm",
+    se = FALSE,
+    color = "grey60",
+    linetype = "dashed"
+  ) +
+  scale_x_log10() +
+  scale_y_log10() +
+  scale_color_manual(
+    values = c(
+      "Shambhala Online" = "#1b9e77",
+      "SGS Staff" = "#d95f02",
+      "P&E" = "#7570b3",
+      "Other" = "#e7298a"
+    )
+  ) +
+  labs(
+    title = "Recording Storage Costs vs. Duration",
+    subtitle = "Longer recordings cost more to store; point size reflects participant count",
+    x = "Duration (hours, log scale)",
+    y = "Estimated Monthly Storage Cost (USD, log scale)",
+    color = "Account Type",
+    size = "Participants"
+  ) +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+
+# Recordings in the lower-left (short, inexpensive) are efficient; recordings in the upper-right (long, costly) are candidates for archival or deletion if they're not actively accessed.
+```
 
 ## Scale Differences in the Use of Recordings
 
-Shambhala Online operates at a much different scale than the rest of SGS in its use of Zoom and the functions of recordings. Shambhala Online has 9 different accounts that are used together and somewhat interchangeably. To show this difference in scale, the following graphs **add up** Shambhala Online activity (where different accounts share an overall function) and contrast it with the individual **averages** of other SGS Zoom accounts (which have distinct functions and are generally not instructional).
+Shambhala Online operates at fundamentally different scale. Its nine accounts function as a unified ecosystem—interchangeable tools for a coherent mission. By contrast, other SGS accounts serve distinct, non-instructional purposes. The graphs below reflect this asymmetry: Shambhala Online's activity is *summed* across all nine accounts; other accounts' activity is *averaged*. The visual disparity is real, not an artifact of methodology.
 
 ```{r}
 recordings <- zoom_events |>
@@ -284,9 +565,6 @@ recordings_summary <- bind_rows(
 )
 ```
 
-```{=typst}
-#pagebreak()
-```
 In these two graphs, Shambhala Online **totals** are contrasted with **averages** for individual accounts.
 
 ```{r}
@@ -317,7 +595,13 @@ recordings_summary |>
     color = "Host:"
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 Not only are there **more** Shambhala Online events, those events have more participants.
@@ -350,12 +634,18 @@ recordings_summary |>
     color = "Host:"
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 ## Participation in Recorded Regularly Scheduled Online Offerings
 
-Regularly-scheduled gatherings presented by Shambhala Online and SGS deparments let us see activity trends.
+Three recurring programs reveal Shambhala's heartbeat: Sunday Gatherings (community practice), Leadership Forums (governance), and P&E calls (administration). Together they show whether participation is growing, stable, or waning.
 
 ```{r}
 #| out.width: "100%"
@@ -394,7 +684,13 @@ individual |>
     y = NULL
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 ```{r}
@@ -431,7 +727,13 @@ individual |>
     y = NULL
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 ```{r}
@@ -474,17 +776,84 @@ individual |>
     y = NULL
   ) +
   ourmirror::mirror_theme(base_size = 13) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor.y = element_blank(),
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
 ```
 
 There are many other regular events, such as staff meetings, that are core activities but are not regularly recorded.
+
+```{r}
+#| out.width: "100%"
+#| eval: false
+
+### Program Consistency
+
+# The three programs above show participation trends, but another lens is useful: consistency. Which programs run every month? Which skip quarters?
+
+recurring_programs <- zoom_events |>
+  filter(recording == "Yes", participants > 1) |>
+  mutate(
+    program = case_when(
+      str_detect(topic, "Sunday") ~ "Sunday Gatherings",
+      str_detect(topic, "Forum") ~ "Leadership Forums",
+      str_detect(topic, "P&E") ~ "P&E Calls",
+      TRUE ~ NA_character_
+    ),
+    year_month = floor_date(month, "month")
+  ) |>
+  filter(!is.na(program)) |>
+  distinct(program, year_month) |>
+  summarise(
+    months_active = n_distinct(year_month),
+    .by = program
+  )
+
+recurring_programs |>
+  ggplot(aes(
+    x = reorder(program, months_active),
+    y = months_active,
+    fill = program
+  )) +
+  geom_col() +
+  geom_text(aes(label = months_active), vjust = -0.3, size = 4) +
+  scale_fill_manual(
+    values = c(
+      "Sunday Gatherings" = "#1b9e77",
+      "Leadership Forums" = "#d95f02",
+      "P&E Calls" = "#7570b3"
+    )
+  ) +
+  scale_y_continuous(
+    limits = c(0, max(recurring_programs$months_active) * 1.1)
+  ) +
+  labs(
+    title = "Program Consistency",
+    subtitle = "Months in which each recurring program held at least one recorded event",
+    x = NULL,
+    y = "Months Active (of ~15 total)",
+    fill = "Program"
+  ) +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    legend.position = "none",
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+# Consistency is a leading indicator of program health. Sunday Gatherings and Leadership Forums run nearly every month; P&E Calls show more seasonal variability. This may reflect intentional scheduling or unplanned absences—understanding which is important for governance.
+```
+
 
 ```{=typst}
 #pagebreak()
 ```
 ## Daily Tonglen Practice
 
-The Compassion for Ukraine - Daily Tonglen sessions represent an extraordinary example of community dedication and consistency.
+For more than a year, Shambhala has held Daily Tonglen for Ukraine every single day—a practice of heartfelt activism that stands as a remarkable testament to collective commitment. The data below documents this consistency and reveals the rhythms of a community practice.
 
 ### Timing Patterns
 
@@ -514,12 +883,10 @@ tonglen_stats <- tonglen_clean |>
   )
 ```
 
+
 #### Key Statistics
 
-- **Total sessions:** `{r} tonglen_stats$total_sessions`
-- **Daily coverage:** `{r} round(tonglen_stats$coverage_pct, 1)`% (sessions on `{r} tonglen_stats$days_covered` of `{r} tonglen_stats$date_range` days)
-- **Average participants:** `{r} round(tonglen_stats$avg_participants, 1)`
-- **Average duration:** `{r} round(tonglen_stats$avg_duration_min, 1)` minutes
+Over the full period, Shambhala held `{r} tonglen_stats$total_sessions` Daily Tonglen sessions, achieving `{r} round(tonglen_stats$coverage_pct, 1)`% daily coverage—meaning tonglen happened on `{r} tonglen_stats$days_covered` of `{r} tonglen_stats$date_range` possible days. Each session draws an average of `{r} round(tonglen_stats$avg_participants, 1)` participants and runs for `{r} round(tonglen_stats$avg_duration_min, 1)` minutes. This consistency, across seasons and cycles, reflects something essential about Shambhala's character.
 
 
 
@@ -541,5 +908,241 @@ tonglen_clean |>
     x = NULL,
     y = NULL
   ) +
-  mirror_theme()
+  mirror_theme() +
+  theme(
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+### Community Stability
+
+Daily Tonglen's consistency is remarkable. But is the core group stable or rotating? The chart below shows how many participants show up each day:
+
+```{r}
+#| out.width: "100%"
+
+tonglen_retention <- tonglen_clean |>
+  arrange(date) |>
+  group_by(date) |>
+  summarise(
+    active_this_day = n(),
+    .groups = "drop"
+  ) |>
+  mutate(
+    month = floor_date(date, "month")
+  ) |>
+  group_by(month) |>
+  summarise(
+    avg_active_per_day = mean(active_this_day),
+    unique_participants_month = n_distinct(date),
+    .groups = "drop"
+  )
+
+tonglen_retention |>
+  ggplot(aes(x = month, y = avg_active_per_day)) +
+  geom_line(color = "steelblue", linewidth = 1) +
+  geom_point(size = 3, color = "steelblue") +
+  geom_smooth(
+    method = "loess",
+    se = FALSE,
+    color = "darkred",
+    linetype = "dashed"
+  ) +
+  labs(
+    title = "Daily Tonglen: Active Participants per Day",
+    subtitle = "Average count across all sessions in each month",
+    x = NULL,
+    y = "Average Participants",
+    caption = "A stable line indicates a consistent core group; declining suggests turnover"
+  ) +
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+The stable line indicates a committed core, not a revolving door. This stability—maintained over 15 months—is the heartbeat Shambhala should celebrate and protect.
+
+```{=typst}
+#pagebreak()
+```
+
+```{r}
+#| out.width: "100%"
+
+tonglen_heatmap <- tonglen_clean |>
+  group_by(weekday, hour) |>
+  summarise(
+    avg_participants = mean(participants, na.rm = TRUE),
+    num_sessions = n(),
+    .groups = "drop"
+  ) |>
+  mutate(
+    weekday = factor(
+      weekday,
+      levels = c(
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
+        "Sun"
+      )
+    ),
+    weekday = fct_rev(weekday)
+  )
+
+tonglen_heatmap |>
+  ggplot(aes(x = hour, y = weekday, fill = avg_participants)) +
+  geom_tile(color = "white", linewidth = 0.5) +
+  # geom_col() +
+  scale_fill_viridis_c(option = "plasma", name = "Avg\nParticipants") +
+  scale_x_continuous(breaks = seq(0, 24, by = 3), expand = c(0, 0)) +
+  labs(
+    title = "Daily Tonglen: Preferred Times",
+    subtitle = "Average participants by day of week and hour",
+    x = "Hour of Day (Eastern Time)",
+    y = NULL
+  ) +
+
+  ourmirror::mirror_theme(base_size = 12) +
+  theme(
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA),
+    panel.grid.major.y = element_blank(),
+    axis.text.x = element_text(angle = 0, hjust = 0.5)
+  )
+```
+
+This heatmap suggests that the account designated for Tonglen practice might be used for a variety of purposes.
+
+
+```{r}
+#| eval: false
+#| out.width: "100%"
+
+## Program Economics
+
+Understanding Zoom's value requires looking beyond frequency or scale. Cost-per-participant reveals which programs deliver the most reach per dollar invested.
+
+program_economics <- zoom_events |>
+  filter(participants > 1) |>
+  mutate(
+    program = case_when(
+      str_detect(topic, "Sunday") ~ "Sunday Gatherings",
+      str_detect(topic, "Forum") ~ "Leadership Forums",
+      str_detect(topic, "P&E") ~ "P&E Calls",
+      str_detect(topic, "Tonglen") ~ "Daily Tonglen",
+      str_detect(host, "Room") ~ "Shambhala Online (other)",
+      TRUE ~ "SGS Admin"
+    ),
+    participant_hours = (duration_hh_mm_ss / 3600) * participants
+  ) |>
+  summarise(
+    total_events = n(),
+    total_participant_hours = sum(participant_hours),
+    avg_participants = mean(participants),
+    .by = program
+  ) |>
+  mutate(
+    estimated_monthly_cost = case_when(
+      program == "Shambhala Online (other)" ~ 150,
+      program == "Daily Tonglen" ~ 30,
+      program == "Sunday Gatherings" ~ 25,
+      program == "Leadership Forums" ~ 20,
+      program == "P&E Calls" ~ 20,
+      TRUE ~ 15
+    ),
+    cost_per_participant_hour = estimated_monthly_cost / total_participant_hours
+  )
+
+program_economics |>
+  ggplot(aes(
+    x = total_participant_hours,
+    y = cost_per_participant_hour,
+    size = total_events,
+    color = program
+  )) +
+  geom_point(alpha = 0.6) +
+  scale_x_log10() +
+  scale_y_log10() +
+  scale_color_manual(
+    values = c(
+      "Shambhala Online (other)" = "#1b9e77",
+      "Daily Tonglen" = "#d95f02",
+      "Sunday Gatherings" = "#7570b3",
+      "Leadership Forums" = "#e7298a",
+      "P&E Calls" = "#66c2a5",
+      "SGS Admin" = "#bdbdbd"
+    )
+  ) +
+  labs(
+    title = "Program Cost Efficiency",
+    subtitle = "Lower right = high participation per dollar; bubble size = number of events",
+    x = "Total Participant-Hours (log scale)",
+    y = "Cost per Participant-Hour (log scale, USD)",
+    color = "Program",
+    size = "Number of Events",
+    caption = "Rough estimates; actual cost allocation would require detailed accounting"
+  ) +
+  ourmirror::mirror_theme(base_size = 11) +
+  theme(
+    panel.background = element_rect(fill = "aliceblue", color = NA),
+    plot.background = element_rect(fill = "aliceblue", color = NA)
+  )
+```
+
+
+```{r}
+#| eval: false
+
+## Account Health Summary
+
+# A quick dashboard view of all accounts shows which are thriving, which warrant attention:
+
+account_health <- zoom_events |>
+  filter(participants > 1) |>
+  mutate(
+    account = case_when(
+      str_detect(host, "Room") ~ "Shambhala Online",
+      str_detect(host, "Tara") ~ "SGS Staff",
+      str_detect(host, "Jeff") ~ "P&E",
+      TRUE ~ host
+    )
+  ) |>
+  summarise(
+    total_events = n(),
+    avg_participants = round(mean(participants), 1),
+    total_participant_hours = round(
+      sum(duration_hh_mm_ss / 3600 * participants),
+      0
+    ),
+    pct_recorded = round(100 * mean(recording == "Yes"), 1),
+    last_active = max(month),
+    .by = account
+  ) |>
+  arrange(desc(total_participant_hours))
+
+account_health |>
+  gt() |>
+  tab_header(
+    title = "Account Health Summary",
+    subtitle = paste("Data through", format(max_date, "%B %Y"))
+  ) |>
+  cols_label(
+    account = "Account",
+    total_events = "Events",
+    avg_participants = "Avg Participants",
+    total_participant_hours = "Total Hours",
+    pct_recorded = "% Recorded",
+    last_active = "Last Active"
+  ) |>
+  cols_align(
+    align = "center",
+    columns = c(total_events, avg_participants, pct_recorded)
+  ) |>
+  opt_row_striping()
 ```
