@@ -1,0 +1,11 @@
+{
+  "permission": {
+    "bash": {
+      "quarto render *": "allow",
+      "head *": "allow"
+    },
+    "edit": {
+      "*.qmd": "allow"
+    }
+  }
+}

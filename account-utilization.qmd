@@ -11,7 +11,7 @@ library(janitor)
 library(scales)
 ```
 
-You can add options to executable code like this
+Consolidate monthly Zoom .csv files and create here("data", "zoom_events.rds")
 
 ```{r}
 #| echo: false
@@ -21,10 +21,11 @@ zoom_events <- list.files(
   pattern = "*.csv",
   full.names = TRUE
 ) %>%
-  map_df(read_csv) |>
+  map_df(~ read_csv(.x, col_types = cols(.default = col_character()))) |>
   clean_names() |>
   mutate(
     start_time = mdy_hms(start_time),
+    end_time = hms(end_time),
     month = as.Date(floor_date(start_time, unit = "month"))
   )
 
